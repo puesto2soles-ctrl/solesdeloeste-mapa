@@ -59,8 +59,8 @@
         }
         #pin {
             position: absolute;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             background: #e74c3c;
             border: 2px solid white;
             border-radius: 50%;
@@ -72,40 +72,81 @@
 </head>
 <body>
 
-    <h2>?? Localizador de Lotes - Puesto 2</h2>
+    <h2>?? Localizador de Manzanas y Lotes - Puesto 2</h2>
     
     <div class="control-box">
         <label for="manzana">Manzana:</label>
-        <select id="manzana">
-            <option value="">Selecciona...</option>
-            <option value="82">Manzana 82</option>
-            <option value="83">Manzana 83</option>
-            <option value="84">Manzana 84</option>
-            <option value="85">Manzana 85</option>
-            <option value="86">Manzana 86</option>
-            <option value="87">Manzana 87</option>
-            <option value="88">Manzana 88</option>
-            <option value="89">Manzana 89</option>
-            <option value="90">Manzana 90</option>
-            <option value="91">Manzana 91</option>
-            <option value="92">Manzana 92</option>
-            <option value="93">Manzana 93</option>
-            <option value="94">Manzana 94</option>
-            <option value="95">Manzana 95</option>
-            <option value="96">Manzana 96</option>
+        <select id="manzana" onchange="actualizarLotes()">
+            <option value="">Manzana...</option>
+            <option value="82">Manz. 82 (Lotes 1 al 82+)</option>
+            <option value="83">Manz. 83 (Lotes 1 al 5)</option>
+            <option value="84">Manz. 84 (Lotes 1 al 28)</option>
+            <option value="85">Manz. 85 (Lotes 1 al 23)</option>
+            <option value="86">Manz. 86 (Lotes 1 al 18)</option>
+            <option value="87">Manz. 87 (Lotes 1 al 23)</option>
+            <option value="88">Manz. 88 (Lotes 1 al 29)</option>
+            <option value="89">Manz. 89 (Lotes 1 al 16)</option>
+            <option value="90">Manz. 90 (Lotes 1 al 20)</option>
+            <option value="91">Manz. 91 (Lotes 1 al 26)</option>
+            <option value="92">Manz. 92 (Lotes 1 al 28)</option>
+            <option value="93">Manz. 93 (Lotes 1 al 13)</option>
+            <option value="94">Manz. 94 (Lotes 1 al 18)</option>
+            <option value="95">Manz. 95 (Lotes 1 al 10)</option>
+            <option value="96">Manz. 96 (Lotes 1 al 16)</option>
         </select>
+
+        <label for="parcela">Lote:</label>
+        <select id="parcela">
+            <option value="">Lote...</option>
+        </select>
+
         <button onclick="ubicarLote()">Marcar</button>
     </div>
 
     <div id="mapa-container">
-        <!-- Apunta exactamente a la imagen con _2 -->
         <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
         <div id="pin"></div>
     </div>
 
     <script>
+        // Límites actualizados de lotes por manzana (incluyendo la extensión de la 82 tras el descampado)
+        var limitesLotes = {
+            "82": 85,
+            "83": 5,
+            "84": 28,
+            "85": 23,
+            "86": 18,
+            "87": 23,
+            "88": 29,
+            "89": 16,
+            "90": 20,
+            "91": 26,
+            "92": 28,
+            "93": 13,
+            "94": 18,
+            "95": 10,
+            "96": 16
+        };
+
+        function actualizarLotes() {
+            var mz = document.getElementById("manzana").value;
+            var selectParcela = document.getElementById("parcela");
+            selectParcela.innerHTML = '<option value="">Lote...</option>';
+            
+            if (mz !== "" && limitesLotes[mz]) {
+                var total = limitesLotes[mz];
+                for (var i = 1; i <= total; i++) {
+                    var opt = document.createElement("option");
+                    opt.value = i;
+                    opt.innerHTML = "Lote " + i;
+                    selectParcela.appendChild(opt);
+                }
+            }
+        }
+
         function ubicarLote() {
             var mz = document.getElementById("manzana").value;
+            var parcela = document.getElementById("parcela").value;
             var pin = document.getElementById("pin");
             
             if (mz === "") {
@@ -114,7 +155,8 @@
                 return;
             }
 
-            var coordenadas = {
+            // Coordenadas centrales de referencia para cada manzana en el plano
+            var coordenadasManzanas = {
                 "82": { top: "82%", left: "20%" },
                 "83": { top: "45%", left: "89%" },
                 "84": { top: "72%", left: "83%" },
@@ -132,9 +174,9 @@
                 "96": { top: "72%", left: "37%" }
             };
 
-            if (coordenadas[mz]) {
-                pin.style.top = coordenadas[mz].top;
-                pin.style.left = coordenadas[mz].left;
+            if (coordenadasManzanas[mz]) {
+                pin.style.top = coordenadasManzanas[mz].top;
+                pin.style.left = coordenadasManzanas[mz].left;
                 pin.style.display = "block";
             } else {
                 alert("Manzana no encontrada.");

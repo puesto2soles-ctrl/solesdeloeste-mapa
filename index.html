@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Táctico con Ruta - Puesto 2 (Soles del Oeste)</title>
+    <title>Guía de Ruta - Puesto 2 (Soles del Oeste)</title>
     <!-- Librería para generar el código QR localmente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -19,10 +19,35 @@
             font-size: 1.1rem;
             margin: 10px 0;
         }
+        /* Barra de opciones superior */
+        .toolbar {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .tool-btn {
+            padding: 8px 12px;
+            margin: 3px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background: #ecf0f1;
+            cursor: pointer;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .tool-btn.active {
+            background: #34495e;
+            color: white;
+            border-color: #2c3e50;
+        }
         .instruction-box {
             background: #e8f8f5;
             color: #117a65;
-            padding: 10px 12px;
+            padding: 8px 12px;
             border-radius: 6px;
             border: #a3e4d7 1px solid;
             display: inline-block;
@@ -39,7 +64,7 @@
             margin-bottom: 10px;
             display: inline-block;
         }
-        button {
+        button.action-btn {
             padding: 10px 20px;
             font-size: 1rem;
             border-radius: 5px;
@@ -48,9 +73,9 @@
             color: white;
             cursor: pointer;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 5px;
         }
-        button:hover {
+        button.action-btn:hover {
             background: #219653;
         }
         #mapa-container {
@@ -70,7 +95,7 @@
             display: block;
         }
         
-        /* SVG para dibujar la línea de ruta por encima del mapa */
+        /* SVG para dibujar los tramos del camino personalizado */
         #svg-ruta {
             position: absolute;
             top: 0;
@@ -97,11 +122,11 @@
             animation: pulsoRojo 1.5s infinite;
         }
 
-        /* PIN AZUL (Ubicación actual del visitante) */
-        #pin-usuario {
+        /* PIN AZUL (Puesto / Partida) */
+        #pin-partida {
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: #3498db;
             border: 1.5px solid white;
             border-radius: 50%;
@@ -110,19 +135,12 @@
             box-shadow: 0 0 8px rgba(52, 152, 219, 0.9);
             z-index: 10;
             pointer-events: none;
-            animation: pulsoAzul 1.5s infinite;
         }
 
         @keyframes pulsoRojo {
             0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.8); }
             70% { box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); }
             100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-
-        @keyframes pulsoAzul {
-            0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.8); }
-            70% { box-shadow: 0 0 0 6px rgba(52, 152, 219, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
         }
 
         #qr-container {
@@ -151,23 +169,32 @@
 </head>
 <body>
 
-    <h2>📍 GPS Táctico y Guía - Puesto 2</h2>
+    <h2>📍 Creador de Rutas - Puesto 2</h2>
     
+    <!-- BARRA DE OPCIONES -->
+    <div class="toolbar" id="barra-herramientas">
+        <span style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px; color: #555;">Modo de Edición:</span>
+        <button class="tool-btn active" id="btn-modo-destino" onclick="cambiarModo('destino')">🔴 Marcar Destino</button>
+        <button class="tool-btn" id="btn-modo-partida" onclick="cambiarModo('partida')">🔵 Ubicar Partida</button>
+        <button class="tool-btn" id="btn-modo-camino" onclick="cambiarModo('camino')">✏️ Trazar Camino</button>
+        <button class="tool-btn" style="background: #e74c3c; color: white;" onclick="reiniciarRuta()">🗑️ Limpiar</button>
+    </div>
+
     <div class="instruction-box" id="instruccion">
-        👆 Haz clic en el plano para marcar el **Destino** del visitante.
+        🎯 <b>Modo Destino:</b> Haz clic en el plano para marcar a dónde va el visitante.
     </div>
 
     <div>
         <div id="mapa-container" onclick="manejarClicMapa(event)">
-            <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
+            <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste" onload="inicializarModoVisitante()">
             
-            <!-- SVG que dibuja la línea de ruta -->
+            <!-- SVG para la polilínea del camino -->
             <svg id="svg-ruta">
-                <line id="linea-camino" x1="0" y1="0" x2="0" y2="0" stroke="#3498db" stroke-width="2.5" stroke-dasharray="4" style="display:none;" />
+                <polyline id="camino-polyline" points="" stroke="#3498db" stroke-width="3" fill="none" />
             </svg>
 
+            <div id="pin-partida"></div>
             <div id="pin-destino"></div>
-            <div id="pin-usuario"></div>
         </div>
     </div>
 
@@ -175,130 +202,180 @@
         <label for="comentario">Nota para el destino (Opcional):</label><br>
         <input type="text" id="comentario" placeholder="Ej: Manzana / Lote..." style="width: 85%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
         <br>
-        <button onclick="generarQR()">Generar QR con Ruta y Destino</button>
+        <button class="action-btn" onclick="generarQR()">Generar QR con Ruta Limpia</button>
     </div>
 
     <!-- Contenedor del código QR -->
     <div id="qr-container">
-        <div id="resultado-texto">Destino marcado</div>
-        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea con el celular para abrir la ruta GPS:</p>
+        <div id="resultado-texto">Ruta generada</div>
+        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea con el celular para ver el camino:</p>
         <div id="qrcode"></div>
     </div>
 
     <script>
+        var modoActual = 'destino';
+        var partidaX = 85; 
+        var partidaY = 50;
         var destinoX = null;
         var destinoY = null;
-        
-        // Coordenadas simuladas/por defecto para el Puesto 2 (punto de partida en el plano)
-        // Puedes ajustar estos valores porcentuales (top y left) para que coincidan exactamente con la ubicación del Puesto 2 en tu imagen.
-        var inicioX = 85; 
-        var inicioY = 50;
+        var puntosCamino = [];
 
-        window.onload = function() {
+        function cambiarModo(modo) {
+            modoActual = modo;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            
+            if(modo === 'destino') {
+                document.getElementById('btn-modo-destino').classList.add('active');
+                document.getElementById('instruccion').innerHTML = "🎯 <b>Modo Destino:</b> Haz clic en el plano para marcar el lote del visitante.";
+            } else if(modo === 'partida') {
+                document.getElementById('btn-modo-partida').classList.add('active');
+                document.getElementById('instruccion').innerHTML = "🔵 <b>Modo Partida:</b> Haz clic para ubicar el punto azul de salida (ej. Puesto 2).";
+            } else if(modo === 'camino') {
+                document.getElementById('btn-modo-camino').classList.add('active');
+                document.getElementById('instruccion').innerHTML = "✏️ <b>Modo Trazar Camino:</b> Haz clic secuencialmente por las calles para armar la línea de guía paso a paso.";
+            }
+        }
+
+        function manejarClicMapa(event) {
             var urlParams = new URLSearchParams(window.location.search);
-            var xParam = urlParams.get('x');
-            var yParam = urlParams.get('y');
+            if (urlParams.get('destX') !== null) return;
+
+            var container = document.getElementById("mapa-container");
+            var rect = container.getBoundingClientRect();
+            
+            var x = ((event.clientX - rect.left) / rect.width) * 100;
+            var y = ((event.clientY - rect.top) / rect.height) * 100;
+
+            if (modoActual === 'destino') {
+                destinoX = x;
+                destinoY = y;
+                var pin = document.getElementById("pin-destino");
+                pin.style.left = destinoX + "%";
+                pin.style.top = destinoY + "%";
+                pin.style.display = "block";
+            } else if (modoActual === 'partida') {
+                partidaX = x;
+                partidaY = y;
+                var pin = document.getElementById("pin-partida");
+                pin.style.left = partidaX + "%";
+                pin.style.top = partidaY + "%";
+                pin.style.display = "block";
+            } else if (modoActual === 'camino') {
+                puntosCamino.push({x: x, y: y});
+                actualizarDibujoCamino();
+            }
+
+            document.getElementById("qr-container").style.display = "none";
+        }
+
+        function actualizarDibujoCamino() {
+            var img = document.getElementById("plano");
+            var width = img.clientWidth;
+            var height = img.clientHeight;
+
+            var puntosStr = "";
+            if(partidaX !== null && partidaY !== null) {
+                puntosStr += ((partidaX/100)*width) + "," + ((partidaY/100)*height) + " ";
+            }
+            
+            for(var i=0; i<puntosCamino.length; i++) {
+                var px = (puntosCamino[i].x / 100) * width;
+                var py = (puntosCamino[i].y / 100) * height;
+                puntosStr += px + "," + py + " ";
+            }
+
+            if(destinoX !== null && destinoY !== null) {
+                puntosStr += ((destinoX/100)*width) + "," + ((destinoY/100)*height);
+            }
+
+            var polyline = document.getElementById("camino-polyline");
+            polyline.setAttribute("points", puntosStr);
+        }
+
+        function reiniciarRuta() {
+            destinoX = null;
+            destinoY = null;
+            puntosCamino = [];
+            document.getElementById("pin-destino").style.display = "none";
+            var polyline = document.getElementById("camino-polyline");
+            polyline.setAttribute("points", "");
+            document.getElementById("qr-container").style.display = "none";
+        }
+
+        function inicializarModoVisitante() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var destX = urlParams.get('destX');
+            var destY = urlParams.get('destY');
+            var partX = urlParams.get('partX');
+            var partY = urlParams.get('partY');
+            var caminoStr = urlParams.get('camino');
             var notaParam = urlParams.get('nota');
 
-            if (xParam !== null && yParam !== null) {
-                destinoX = parseFloat(xParam);
-                destinoY = parseFloat(yParam);
+            if (destX !== null && destY !== null) {
+                destinoX = parseFloat(destX);
+                destinoY = parseFloat(destY);
+                if(partX !== null) partidaX = parseFloat(partX);
+                if(partY !== null) partidaY = parseFloat(partY);
 
-                // Mostrar Pin Rojo de Destino
-                var pinDestino = document.getElementById("pin-destino");
-                pinDestino.style.left = destinoX + "%";
-                pinDestino.style.top = destinoY + "%";
-                pinDestino.style.display = "block";
+                // CARGAR CAMINO PERSONALIZADO
+                if(caminoStr) {
+                    var coords = caminoStr.split(';');
+                    for(var i=0; i<coords.length; i++) {
+                        var xy = coords[i].split(',');
+                        if(xy.length === 2) {
+                            puntosCamino.push({x: parseFloat(xy[0]), y: parseFloat(xy[1])});
+                        }
+                    }
+                }
 
-                // Mostrar Pin Azul de Ubicación Inicial (Puesto 2)
-                var pinUsuario = document.getElementById("pin-usuario");
-                pinUsuario.style.left = inicioX + "%";
-                pinUsuario.style.top = inicioY + "%";
-                pinUsuario.style.display = "block";
+                // DIBUJAR SOLAMENTE LA LÍNEA DEL CAMINO (LOS PINES QUEDAN OCULTOS PARA EL VISITANTE)
+                actualizarDibujoCamino();
 
-                // Dibujar la línea de ruta entre el Puesto 2 y el Destino
-                actualizarLineaRuta(inicioX, inicioY, destinoX, destinoY);
-
-                // Modificar interfaz para el visitante
+                // Ocultar herramientas de edición y panel de control
+                document.getElementById("barra-herramientas").style.display = "none";
                 document.getElementById("panel-control").style.display = "none";
+                
                 var inst = document.getElementById("instruccion");
                 inst.style.background = "#d4edda";
                 inst.style.color = "#155724";
                 inst.style.borderColor = "#c3e6cb";
                 
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                inst.innerHTML = "🧭 <b>Ruta Activa:</b> Sigue la línea azul desde el Puesto 2 hasta " + mensajeDestino;
+                inst.innerHTML = "🧭 <b>Guía de Navegación:</b> Simplemente sigue la línea azul marcada en el plano hacia <b>" + mensajeDestino + "</b>.";
+            } else {
+                var pinPart = document.getElementById("pin-partida");
+                pinPart.style.left = partidaX + "%";
+                pinPart.style.top = partidaY + "%";
+                pinPart.style.display = "block";
             }
-        };
-
-        function manejarClicMapa(event) {
-            var urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('x') !== null) return; // Bloquear si es modo visitante
-
-            var container = document.getElementById("mapa-container");
-            var rect = container.getBoundingClientRect();
-            
-            var x = event.clientX - rect.left;
-            var y = event.clientY - rect.top;
-            
-            destinoX = (x / rect.width) * 100;
-            destinoY = (y / rect.height) * 100;
-
-            // Marcar el destino en el mapa del guardia
-            var pinDestino = document.getElementById("pin-destino");
-            pinDestino.style.left = destinoX + "%";
-            pinDestino.style.top = destinoY + "%";
-            pinDestino.style.display = "block";
-
-            // Mostrar también el punto de partida (Puesto 2) para referencia del guardia
-            var pinUsuario = document.getElementById("pin-usuario");
-            pinUsuario.style.left = inicioX + "%";
-            pinUsuario.style.top = inicioY + "%";
-            pinUsuario.style.display = "block";
-
-            // Trazar línea preliminar
-            actualizarLineaRuta(inicioX, inicioY, destinoX, destinoY);
-            
-            document.getElementById("qr-container").style.display = "none";
-        }
-
-        function actualizarLineaRuta(x1Pct, y1Pct, x2Pct, y2Pct) {
-            var container = document.getElementById("mapa-container");
-            var img = document.getElementById("plano");
-            
-            // Obtener dimensiones reales renderizadas de la imagen
-            var width = img.clientWidth;
-            var height = img.clientHeight;
-
-            var x1 = (x1Pct / 100) * width;
-            var y1 = (y1Pct / 100) * height;
-            var x2 = (x2Pct / 100) * width;
-            var y2 = (y2Pct / 100) * height;
-
-            var linea = document.getElementById("linea-camino");
-            linea.setAttribute("x1", x1);
-            linea.setAttribute("y1", y1);
-            linea.setAttribute("x2", x2);
-            linea.setAttribute("y2", y2);
-            linea.style.display = "block";
         }
 
         function generarQR() {
             if (destinoX === null || destinoY === null) {
-                alert("Por favor, haz primero clic sobre el plano para marcar el destino.");
+                alert("Por favor, marca primero el punto de destino en el plano.");
                 return;
             }
 
             var nota = document.getElementById("comentario").value.trim();
             var baseUrl = window.location.origin + window.location.pathname;
-            var linkFinal = baseUrl + "?x=" + destinoX.toFixed(2) + "&y=" + destinoY.toFixed(2);
             
+            var linkFinal = baseUrl + "?destX=" + destinoX.toFixed(2) + "&destY=" + destinoY.toFixed(2) +
+                                      "&partX=" + partidaX.toFixed(2) + "&partY=" + partidaY.toFixed(2);
+            
+            if(puntosCamino.length > 0) {
+                var caminoArr = [];
+                for(var i=0; i<puntosCamino.length; i++) {
+                    caminoArr.push(puntosCamino[i].x.toFixed(1) + "," + puntosCamino[i].y.toFixed(1));
+                }
+                linkFinal += "&camino=" + encodeURIComponent(caminoArr.join(';'));
+            }
+
             if (nota !== "") {
                 linkFinal += "&nota=" + encodeURIComponent(nota);
             }
 
             var resultadoTexto = document.getElementById("resultado-texto");
-            resultadoTexto.innerHTML = nota !== "" ? "Destino: " + nota : "Destino marcado";
+            resultadoTexto.innerHTML = nota !== "" ? "Destino: " + nota : "Ruta generada";
 
             var qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = "";

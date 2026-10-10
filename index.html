@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localizador con QR Interactivo - Puesto 2 (Soles del Oeste)</title>
+    <title>Guía GPS - Puesto 2 (Soles del Oeste)</title>
     <!-- Librería para generar el código QR de forma local -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -22,19 +22,19 @@
         .instruction-box {
             background: #e8f8f5;
             color: #117a65;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-radius: 6px;
             border: #a3e4d7 1px solid;
             display: inline-block;
             margin-bottom: 10px;
             font-size: 0.9rem;
             font-weight: bold;
+            max-width: 450px;
         }
         .control-box {
             background: white;
             padding: 10px;
             border-radius: 8px;
-px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             margin-bottom: 10px;
             display: inline-block;
@@ -70,7 +70,7 @@ px;
             display: block;
         }
         
-        /* PIN DE 6 PÍXELES CON PULSO LUMINOSO */
+        /* PIN DE 6 PÍXELES CON PULSO LUMINOSO (Destino) */
         #pin {
             position: absolute;
             width: 6px;
@@ -87,15 +87,9 @@ px;
         }
 
         @keyframes pulso {
-            0% {
-                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.8);
-            }
-            70% {
-                box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.8); }
+            70% { box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
         }
 
         #qr-container {
@@ -124,7 +118,7 @@ px;
 </head>
 <body>
 
-    <h2>📍 Localizador y Guía QR - Puesto 2</h2>
+    <h2>📍 Localizador y Guía GPS - Puesto 2</h2>
     
     <div class="instruction-box" id="instruccion">
         👆 Haz clic en el plano donde va el visitante y presiona generar QR.
@@ -147,7 +141,7 @@ px;
     <!-- Contenedor del código QR -->
     <div id="qr-container">
         <div id="resultado-texto">Destino marcado</div>
-        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea con el celular para abrir el plano con la ubicación:</p>
+        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea con el celular para abrir la guía GPS:</p>
         <div id="qrcode"></div>
     </div>
 
@@ -176,11 +170,11 @@ px;
                 inst.style.color = "#155724";
                 inst.style.borderColor = "#c3e6cb";
                 
-                if (notaParam) {
-                    inst.innerHTML = "🎯 Destino del Visitante: " + decodeURIComponent(notaParam);
-                } else {
-                    inst.innerHTML = "🎯 Este es tu destino indicado por el Puesto 2.";
-                }
+                var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
+                inst.innerHTML = "🎯 <b>Destino:</b> " + mensajeDestino + "<br><span style='font-size: 0.8rem;'>Activando GPS para orientarte...</span>";
+
+                // Activar geolocalización del visitante en tiempo real
+                iniciarGPSVisitor();
             }
         };
 
@@ -232,6 +226,37 @@ px;
             });
 
             document.getElementById("qr-container").style.display = "block";
+        }
+
+        // Función para rastrear la posición GPS del visitante en su celular
+        function iniciarGPSVisitor() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(
+                    function(position) {
+                        var lat = position.coords.latitude;
+                        var lon = position.coords.longitude;
+                        
+                        // Aquí el GPS está activo. Como el plano es una imagen interna del barrio y no un mapa satelital global,
+                        // podemos mostrar el estado de conexión GPS o utilizar las coordenadas para futuras referencias internas.
+                        var inst = document.getElementById("instruccion");
+                        var notaParam = new URLSearchParams(window.location.search).get('nota');
+                        var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
+                        
+                        inst.innerHTML = "🎯 <b>Destino:</b> " + mensajeDestino + "<br><span style='color: #27ae60;'>🟢 GPS Conectado - Sigue el punto rojo marcado en el plano.</span>";
+                    },
+                    function(error) {
+                        console.warn("Error de GPS: " + error.message);
+                        var inst = document.getElementById("instruccion");
+                        var notaParam = new URLSearchParams(window.location.search).get('nota');
+                        var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
+                        
+                        inst.innerHTML = "🎯 <b>Destino:</b> " + mensajeDestino + "<br><span style='color: #e67e22;'>⚠️ Activa la ubicación en tu celular para una mejor guía.</span>";
+                    },
+                    { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+                );
+            } else {
+                console.warn("La geolocalización no está soportada en este navegador.");
+            }
         }
     </script>
 

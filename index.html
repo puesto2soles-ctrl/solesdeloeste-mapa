@@ -78,21 +78,21 @@
         <label for="manzana">Manzana:</label>
         <select id="manzana" onchange="actualizarLotes()">
             <option value="">Manzana...</option>
-            <option value="82">Manz. 82 (Lotes 1 al 82+)</option>
-            <option value="83">Manz. 83 (Lotes 1 al 5)</option>
-            <option value="84">Manz. 84 (Lotes 1 al 28)</option>
-            <option value="85">Manz. 85 (Lotes 1 al 23)</option>
-            <option value="86">Manz. 86 (Lotes 1 al 18)</option>
-            <option value="87">Manz. 87 (Lotes 1 al 23)</option>
-            <option value="88">Manz. 88 (Lotes 1 al 29)</option>
-            <option value="89">Manz. 89 (Lotes 1 al 16)</option>
-            <option value="90">Manz. 90 (Lotes 1 al 20)</option>
-            <option value="91">Manz. 91 (Lotes 1 al 26)</option>
-            <option value="92">Manz. 92 (Lotes 1 al 28)</option>
-            <option value="93">Manz. 93 (Lotes 1 al 13)</option>
-            <option value="94">Manz. 94 (Lotes 1 al 18)</option>
-            <option value="95">Manz. 95 (Lotes 1 al 10)</option>
-            <option value="96">Manz. 96 (Lotes 1 al 16)</option>
+            <option value="82">Manz. 82 (85 lotes)</option>
+            <option value="83">Manz. 83 (23 lotes)</option>
+            <option value="84">Manz. 84 (10 lotes)</option>
+            <option value="85">Manz. 85 (23 lotes)</option>
+            <option value="86">Manz. 86 (18 lotes)</option>
+            <option value="87">Manz. 87 (23 lotes)</option>
+            <option value="88">Manz. 88 (29 lotes)</option>
+            <option value="89">Manz. 89 (28 lotes)</option>
+            <option value="90">Manz. 90 (20 lotes)</option>
+            <option value="91">Manz. 91 (7 lotes)</option>
+            <option value="92">Manz. 92 (17 lotes)</option>
+            <option value="93">Manz. 93 (13 lotes)</option>
+            <option value="94">Manz. 94 (18 lotes)</option>
+            <option value="95">Manz. 95 (28 lotes)</option>
+            <option value="96">Manz. 96 (16 lotes)</option>
         </select>
 
         <label for="parcela">Lote:</label>
@@ -109,22 +109,21 @@
     </div>
 
     <script>
-        // Límites actualizados de lotes por manzana (incluyendo la extensión de la 82 tras el descampado)
         var limitesLotes = {
             "82": 85,
-            "83": 5,
-            "84": 28,
+            "83": 23,
+            "84": 10,
             "85": 23,
             "86": 18,
             "87": 23,
             "88": 29,
-            "89": 16,
+            "89": 28,
             "90": 20,
-            "91": 26,
-            "92": 28,
+            "91": 7,
+            "92": 17,
             "93": 13,
             "94": 18,
-            "95": 10,
+            "95": 28,
             "96": 16
         };
 
@@ -155,7 +154,6 @@
                 return;
             }
 
-            // Coordenadas centrales de referencia para cada manzana en el plano
             var coordenadasManzanas = {
                 "82": { top: "82%", left: "20%" },
                 "83": { top: "45%", left: "89%" },

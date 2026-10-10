@@ -58,9 +58,9 @@
             margin-bottom: 10px;
         }
         .puestos-selector button {
-            padding: 6px 12px;
+            padding: 6px 10px;
             margin: 2px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border: 1px solid #bdc3c7;
             background: #ecf0f1;
             border-radius: 4px;
@@ -107,21 +107,21 @@
 </head>
 <body>
 
-    <h2>📍 Creador de Rutas - Soles del Oeste</h2>
+    <h2>📍 Navegador GPS - Soles del Oeste</h2>
     
     <div class="instruction-box" id="instruccion">
-        🎯 <b>Paso 2:</b> Selecciona el puesto de origen y haz clic en el mapa para marcar el destino.
+        🎯 Selecciona el puesto de origen y haz clic en el mapa para marcar el lote de destino.
     </div>
 
-    <!-- Contenedor del Mapa Leaflet -->
+    <!-- Contenedor del Mapa -->
     <div id="map"></div>
 
     <div class="control-panel">
         <div class="puestos-selector">
             <span style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 4px;">Puesto de Origen:</span>
-            <button type="button" id="btn-p2" class="activo" onclick="cambiarPuesto('Puesto 2', 400, 900)">Puesto 2</button>
-            <button type="button" id="btn-p1" onclick="cambiarPuesto('Puesto 1', 700, 450)">Puesto 1</button>
-            <button type="button" id="btn-principal" onclick="cambiarPuesto('Principal', 200, 150)">Principal</button>
+            <button type="button" id="btn-principal" class="activo" onclick="cambiarPuesto('Puesto Principal', -33.111862, -64.401485)">Principal</button>
+            <button type="button" id="btn-p1" onclick="cambiarPuesto('Puesto 1', -33.116553, -64.405181)">Puesto 1</button>
+            <button type="button" id="btn-p2" onclick="cambiarPuesto('Puesto 2', -33.120714, -64.405171)">Puesto 2</button>
         </div>
 
         <label for="comentario" style="font-size: 0.85rem;">Nota para el destino (Opcional):</label><br>
@@ -138,73 +138,56 @@
         <div id="qrcode"></div>
     </div>
 
-    <!-- Script principal de Leaflet -->
+    <!-- Script de Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. Inicializar el mapa con coordenadas de imagen plana (CRS.Simple)
-        var map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -2,
-            maxZoom: 3
-        });
+        // Inicializar mapa con coordenadas GPS reales centradas en el barrio
+        var map = L.map('map').setView([-33.1165, -64.4035], 15);
 
-        var w = 1000; 
-        var h = 1400;
-        var bounds = [[0, 0], [h, w]];
+        // Añadir la capa base de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        // Superponer la imagen
-        L.imageOverlay('1000043402_2.jpg', bounds).addTo(map);
-        map.fitBounds(bounds);
-
-        // Variables de control de ruta
-        var puestoActual = "Puesto 2";
-        var coordOrigen = [400, 900]; // Coordenada base inicial (Puesto 2)
+        // Coordenadas iniciales por defecto (Puesto Principal)
+        var puestoActual = "Puesto Principal";
+        var coordOrigen = [-33.111862, -64.401485];
         var markerOrigen = null;
         var markerDestino = null;
         var polylineRuta = null;
 
-        // Crear marcador inicial para el origen (Pin Azul)
+        // Crear marcador azul para el origen
         markerOrigen = L.circleMarker(coordOrigen, {
-            radius: 8,
-            color: 'white',
-            weight: 2,
-            fillColor: '#3498db',
-            fillOpacity: 1
+            radius: 8, color: 'white', weight: 2, fillColor: '#3498db', fillOpacity: 1
         }).addTo(map).bindPopup("<b>Origen:</b> " + puestoActual);
 
-        // Función para cambiar el puesto de origen desde los botones
-        function cambiarPuesto(nombre, x, y) {
+        // Función para cambiar de puesto de origen
+        function cambiarPuesto(nombre, lat, lng) {
             puestoActual = nombre;
-            coordOrigen = [x, y];
+            coordOrigen = [lat, lng];
 
-            // Actualizar estado visual de los botones
-            document.getElementById("btn-p2").className = (nombre === "Puesto 2") ? "activo" : "";
+            // Actualizar botones activos
+            document.getElementById("btn-principal").className = (nombre === "Puesto Principal") ? "activo" : "";
             document.getElementById("btn-p1").className = (nombre === "Puesto 1") ? "activo" : "";
-            document.getElementById("btn-principal").className = (nombre === "Principal") ? "activo" : "";
+            document.getElementById("btn-p2").className = (nombre === "Puesto 2") ? "activo" : "";
 
-            // Reposicionar el marcador azul
             markerOrigen.setLatLng(coordOrigen);
             markerOrigen.bindPopup("<b>Origen:</b> " + puestoActual);
+            map.setView(coordOrigen, 16);
 
-            // Si ya hay un destino, actualizar la línea de ruta
-            if (markerDestino) {
-                trazarRuta();
-            }
+            if (markerDestino) trazarRuta();
         }
 
-        // 2. Evento al hacer clic en el mapa para marcar el destino
+        // Evento al hacer clic en el mapa para marcar el destino
         map.on('click', function(e) {
-            var latLngDestino = e.latlng; // [lat, lng] en plano cartesiano
+            var latLngDestino = e.latlng;
 
             if (markerDestino) {
                 markerDestino.setLatLng(latLngDestino);
             } else {
                 markerDestino = L.circleMarker(latLngDestino, {
-                    radius: 8,
-                    color: 'white',
-                    weight: 2,
-                    fillColor: '#e74c3c',
-                    fillOpacity: 1
+                    radius: 8, color: 'white', weight: 2, fillColor: '#e74c3c', fillOpacity: 1
                 }).addTo(map).bindPopup("Destino seleccionado");
             }
 
@@ -212,19 +195,21 @@
             document.getElementById("qr-container").style.display = "none";
         });
 
-        // 3. Trazar la línea de ruta entre origen y destino
+        // Trazar línea de ruta en escuadra adaptada a coordenadas GPS
         function trazarRuta() {
-            var destLatLng = markerDestino.getLatLng();
+            var dest = markerDestino.getLatLng();
             
-            // Generar un punto intermedio en "L" (giro en escuadra por las calles)
-            var interX = coordOrigen[0];
-            var interY = destLatLng.lng;
-            var puntosLinea = [coordOrigen, [interX, interY], [destLatLng.lat, destLatLng.lng]];
+            // Ruta ortogonal (en L) usando latitud del origen y longitud del destino como punto de giro
+            var puntosCamino = [
+                coordOrigen,
+                [coordOrigen[0], dest.lng],
+                [dest.lat, dest.lng]
+            ];
 
             if (polylineRuta) {
-                polylineRuta.setLatLngs(puntosLinea);
+                polylineRuta.setLatLngs(puntosCamino);
             } else {
-                polylineRuta = L.polyline(puntosLinea, {
+                polylineRuta = L.polyline(puntosCamino, {
                     color: '#3498db',
                     weight: 4,
                     opacity: 0.8
@@ -232,96 +217,57 @@
             }
         }
 
-        // 4. Limpiar ruta
         function reiniciarRuta() {
-            if (markerDestino) {
-                map.removeLayer(markerDestino);
-                markerDestino = null;
-            }
-            if (polylineRuta) {
-                map.removeLayer(polylineRuta);
-                polylineRuta = null;
-            }
+            if (markerDestino) { map.removeLayer(markerDestino); markerDestino = null; }
+            if (polylineRuta) { map.removeLayer(polylineRuta); polylineRuta = null; }
             document.getElementById("qr-container").style.display = "none";
             document.getElementById("comentario").value = "";
         }
 
-        // 5. Generar código QR para el visitante
         function generarQR() {
-            if (!markerDestino) {
-                alert("Por favor, haz clic en el mapa para marcar un destino.");
-                return;
-            }
-
+            if (!markerDestino) { alert("Haz clic en el mapa para marcar un destino."); return; }
             var dest = markerDestino.getLatLng();
             var nota = document.getElementById("comentario").value.trim();
             var baseUrl = window.location.origin + window.location.pathname;
 
-            var linkFinal = baseUrl + "?dX=" + dest.lat.toFixed(1) + "&dY=" + dest.lng.toFixed(1) + 
+            var linkFinal = baseUrl + "?lat=" + dest.lat.toFixed(6) + "&lng=" + dest.lng.toFixed(6) + 
                             "&puesto=" + encodeURIComponent(puestoActual) + 
-                            "&ox=" + coordOrigen[0] + "&oy=" + coordOrigen[1];
-
-            if (nota !== "") {
-                linkFinal += "&nota=" + encodeURIComponent(nota);
-            }
+                            "&olat=" + coordOrigen[0] + "&olng=" + coordOrigen[1];
+            if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
 
             document.getElementById("resultado-texto").innerHTML = "Ruta desde " + puestoActual + (nota ? " (" + nota + ")" : "");
-
             var qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = "";
-
-            new QRCode(qrcodeDiv, {
-                text: linkFinal,
-                width: 140,
-                height: 140
-            });
-
+            new QRCode(qrcodeDiv, { text: linkFinal, width: 140, height: 140 });
             document.getElementById("qr-container").style.display = "block";
         }
 
-        // 6. Al cargar, verificar si el visitante abrió un enlace con parámetros de destino
+        // Cargar parámetros si se abre desde el QR en el celular del visitante
         window.onload = function() {
             var urlParams = new URLSearchParams(window.location.search);
-            var dX = urlParams.get('dX');
-            var dY = urlParams.get('dY');
-            var puestoParam = urlParams.get('puesto');
-            var ox = urlParams.get('ox');
-            var oy = urlParams.get('oy');
-            var notaParam = urlParams.get('nota');
+            var lat = urlParams.get('lat'), lng = urlParams.get('lng'), puestoParam = urlParams.get('puesto');
+            var olat = urlParams.get('olat'), olng = urlParams.get('olng'), notaParam = urlParams.get('nota');
 
-            if (dX !== null && dY !== null) {
-                if (ox !== null && oy !== null) {
-                    coordOrigen = [parseFloat(ox), parseFloat(oy)];
-                }
-                if (puestoParam) {
-                    puestoActual = decodeURIComponent(puestoParam);
-                }
+            if (lat !== null && lng !== null) {
+                if (olat !== null && olng !== null) coordOrigen = [parseFloat(olat), parseFloat(olng)];
+                if (puestoParam) puestoActual = decodeURIComponent(puestoParam);
 
-                // Actualizar marcador de origen en modo visitante
                 markerOrigen.setLatLng(coordOrigen);
                 markerOrigen.bindPopup("<b>Origen:</b> " + puestoActual);
 
-                // Colocar marcador de destino
-                var destLatLon = [parseFloat(dX), parseFloat(dY)];
-                markerDestino = L.circleMarker(destLatLon, {
-                    radius: 8,
-                    color: 'white',
-                    weight: 2,
-                    fillColor: '#e74c3c',
-                    fillOpacity: 1
+                markerDestino = L.circleMarker([parseFloat(lat), parseFloat(lng)], {
+                    radius: 8, color: 'white', weight: 2, fillColor: '#e74c3c', fillOpacity: 1
                 }).addTo(map);
 
                 trazarRuta();
+                map.setView(coordOrigen, 16);
 
-                // Ocultar controles de la garita para el visitante
                 document.querySelector(".control-panel").style.display = "none";
-                
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                document.getElementById("instruccion").innerHTML = "🧭 Te encuentras en el <b>" + puestoActual + "</b> (punto azul). Sigue la línea azul hacia <b>" + mensajeDestino + "</b>.";
+                document.getElementById("instruccion").innerHTML = "🧭 Te encuentras saliendo del <b>" + puestoActual + "</b>. Sigue la ruta marcada hacia <b>" + mensajeDestino + "</b>.";
                 document.querySelector("h2").innerHTML = "📍 Indicaciones de Guía";
             }
         };
     </script>
-
 </body>
 </html>

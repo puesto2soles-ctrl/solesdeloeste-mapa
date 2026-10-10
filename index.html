@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Indicaciones dadas por el Puesto 2 (Soles del Oeste)</title>
-    <!-- Librería para generar el código QR localmente -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Navegador Inteligente - Soles del Oeste (Puesto 2)</title>
+    
+    <!-- 1. Estilos CSS de Leaflet (Mapas Libres) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            margin: 0;
-            padding: 10px;
-            text-align: center;
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            text-align: center; 
+            background: #f0f2f5; 
         }
         h2 {
             color: #1a252f;
@@ -31,336 +33,65 @@
             font-weight: bold;
             max-width: 450px;
         }
-        .control-box {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-            display: inline-block;
-        }
-        button.action-btn {
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 5px;
-            border: none;
-            background: #27ae60;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        button.action-btn:hover {
-            background: #219653;
-        }
-        button.reset-btn {
-            background: #e74c3c;
-            margin-left: 5px;
-        }
-        button.reset-btn:hover {
-            background: #c0392b;
-        }
-        #mapa-container {
-            position: relative;
-            display: inline-block;
-            max-width: 100%;
+        #map { 
+            width: 100%; 
+            max-width: 600px; 
+            height: 70vh; 
+            margin: 0 auto; 
             border: 2px solid #bdc3c7;
             border-radius: 8px;
-            overflow: hidden;
-            background: #fff;
-            cursor: crosshair;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        #plano {
-            width: 100%;
-            max-width: 500px;
-            height: auto;
-            display: block;
-        }
-        
-        #svg-ruta {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        /* PIN ROJO (Destino) */
-        #pin-destino {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #e74c3c;
-            border: 2px solid white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.9);
-            z-index: 10;
-            pointer-events: none;
-            animation: pulsoRojo 1.5s infinite;
-        }
-
-        /* PIN AZUL (Ubicación GPS del Usuario / Partida) */
-        #pin-partida {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #3498db;
-            border: 2px solid white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            display: block;
-            box-shadow: 0 0 10px rgba(52, 152, 219, 0.9);
-            z-index: 10;
-            pointer-events: none;
-            animation: pulsoAzul 1.5s infinite;
-        }
-
-        @keyframes pulsoRojo {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.8); }
-            70% { box-shadow: 0 0 0 8px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-
-        @keyframes pulsoAzul {
-            0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.8); }
-            70% { box-shadow: 0 0 0 8px rgba(52, 152, 219, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
-        }
-
-        #qr-container {
+        .control-panel { 
             margin-top: 15px;
-            background: white;
-            padding: 15px;
+            padding: 10px; 
+            background: white; 
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            max-width: 300px;
-            margin-left: auto;
-            margin-right: auto;
-            display: none;
-        }
-        #qrcode {
-            margin: 10px auto;
-            display: flex;
-            justify-content: center;
-        }
-        #resultado-texto {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 0.95rem;
+            display: inline-block;
+            max-width: 400px;
         }
     </style>
 </head>
 <body>
 
-    <h2 id="titulo-principal">📍 Creador Automático de Rutas - Puesto 2</h2>
+    <h2>📍 Navegador Automático - Puesto 2 (Soles del Oeste)</h2>
     
     <div class="instruction-box" id="instruccion">
-        🎯 <b>Modo Operativo:</b> Haz clic en cualquier lote del mapa para fijar el destino y generar el QR.
+        🎯 <b>Paso 1 Iniciado:</b> Cargando la base cartográfica y la superposición del plano de Soles del Oeste.
     </div>
 
-    <div>
-        <div id="mapa-container" onclick="manejarClicMapa(event)">
-            <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste" onload="inicializarSistema()">
-            
-            <svg id="svg-ruta">
-                <polyline id="camino-polyline" points="" stroke="#3498db" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+    <!-- Contenedor del Mapa -->
+    <div id="map"></div>
 
-            <div id="pin-partida"></div>
-            <div id="pin-destino"></div>
-        </div>
+    <div class="control-panel">
+        <p style="font-size: 0.85rem; color: #555; margin: 0;">Próximamente: Selección de origen, destino y generación de QR automático.</p>
     </div>
 
-    <div class="control-box" id="panel-control" style="max-width: 400px; margin: 10px auto; display: block;">
-        <label for="comentario">Nota para el destino (Opcional):</label><br>
-        <input type="text" id="comentario" placeholder="Ej: Manzana / Lote / Propietario..." style="width: 85%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
-        <br>
-        <button class="action-btn" onclick="generarQR()">Generar QR Automático</button>
-        <button class="action-btn reset-btn" onclick="reiniciarRuta()">Limpiar</button>
-    </div>
-
-    <!-- Contenedor del código QR -->
-    <div id="qr-container">
-        <div id="resultado-texto">Ruta generada</div>
-        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea con el celular para ver las indicaciones:</p>
-        <div id="qrcode"></div>
-    </div>
-
+    <!-- 2. Script principal de Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Coordenadas por defecto (Puesto 2) en caso de que no active el GPS
-        var partidaX = 85; 
-        var partidaY = 50;
+        // Inicializar el mapa centrado de manera aproximada en Soles del Oeste, Río Cuarto
+        var map = L.map('map', {
+            crs: L.CRS.Simple, // Usamos CRS.Simple para mapear coordenadas de imagen plana con precisión absoluta
+            minZoom: -2,
+            maxZoom: 3
+        });
 
-        var destinoX = null;
-        var destinoY = null;
+        // Dimensiones de referencia de tu imagen (1000043402_2.jpg)
+        // Definimos un plano cartesiano virtual para que encaje perfecto
+        var w = 1000; 
+        var h = 1400;
+        var bounds = [[0, 0], [h, w]];
 
-        function inicializarSistema() {
-            var urlParams = new URLSearchParams(window.location.search);
-            var destX = urlParams.get('destX');
-            var destY = urlParams.get('destY');
-            var notaParam = urlParams.get('nota');
+        // Superponer tu imagen personalizada exactamente sobre el contenedor del mapa
+        var overlay = L.imageOverlay('1000043402_2.jpg', bounds).addTo(map);
 
-            if (destX !== null && destY !== null) {
-                // MODO VISITANTE (Abierto desde el celular escaneando el QR)
-                destinoX = parseFloat(destX);
-                destinoY = parseFloat(destY);
+        // Ajustar la vista del mapa para que muestre toda la imagen de forma limpia
+        map.fitBounds(bounds);
 
-                var pinDest = document.getElementById("pin-destino");
-                pinDest.style.left = destinoX + "%";
-                pinDest.style.top = destinoY + "%";
-                pinDest.style.display = "block";
-
-                document.getElementById("titulo-principal").innerHTML = "📍 Tu Ubicación y Ruta - Puesto 2";
-                document.getElementById("panel-control").style.display = "none";
-                
-                var inst = document.getElementById("instruccion");
-                inst.style.background = "#d4edda";
-                inst.style.color = "#155724";
-                inst.style.borderColor = "#c3e6cb";
-                
-                var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                inst.innerHTML = "🧭 Buscando tu ubicación GPS para guiarte hacia <b>" + mensajeDestino + "</b>...";
-
-                // Intentar obtener la ubicación GPS real del teléfono
-                activarGPSTelefono(destinoX, destinoY, mensajeDestino);
-
-            } else {
-                // MODO GUARDIA (Fijo en el puesto)
-                actualizarPinPartida(partidaX, partidaY);
-            }
-        }
-
-        function actualizarPinPartida(x, y) {
-            var pinPart = document.getElementById("pin-partida");
-            pinPart.style.left = x + "%";
-            pinPart.style.top = y + "%";
-        }
-
-        function activarGPSTelefono(destX, destY, nombreDestino) {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.watchPosition(function(position) {
-                    var lat = position.coords.latitude;
-                    var lon = position.coords.longitude;
-
-                    // NOTA DE CALIBRACIÓN: Aquí puedes ajustar los rangos de conversión 
-                    // si conoces las esquinas extremas en Lat/Lon del plano de Soles del Oeste.
-                    // Por defecto, simulamos el mapeo dinámico basado en proximidad GPS:
-                    
-                    // Ejemplo básico de conversión orientativa (ajustable según pruebas en campo):
-                    // Si prefieres mantener la partida en el Puesto 2 base cuando el GPS fluctúe, 
-                    // puedes combinarlo. Aquí dejamos preparado el puente para el GPS real:
-                    
-                    // Si el GPS del celular arroja datos válidos dentro del predio:
-                    // (De momento dejamos la partida fija en Puesto 2 o interpolada)
-                    
-                    var userX = partidaX; 
-                    var userY = partidaY;
-
-                    actualizarPinPartida(userX, userY);
-                    trazarRutaAutomatica(userX, userY, destX, destY);
-
-                    document.getElementById("instruccion").innerHTML = "🧭 <b>En camino:</b> Te encuentras geolocalizado. Sigue la línea azul hacia <b>" + nombreDestino + "</b>.";
-
-                }, function(error) {
-                    // Si el usuario deniega el GPS, usamos el Puesto 2 por defecto
-                    actualizarPinPartida(partidaX, partidaY);
-                    trazarRutaAutomatica(partidaX, partidaY, destX, destY);
-                    document.getElementById("instruccion").innerHTML = "🧭 Sigue la línea azul desde el Puesto 2 hacia <b>" + nombreDestino + "</b>.";
-                }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 });
-            } else {
-                actualizarPinPartida(partidaX, partidaY);
-                trazarRutaAutomatica(partidaX, partidaY, destX, destY);
-            }
-        }
-
-        function manejarClicMapa(event) {
-            var urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('destX') !== null) return;
-
-            var container = document.getElementById("mapa-container");
-            var rect = container.getBoundingClientRect();
-            
-            destinoX = ((event.clientX - rect.left) / rect.width) * 100;
-            destinoY = ((event.clientY - rect.top) / rect.height) * 100;
-
-            var pinDest = document.getElementById("pin-destino");
-            pinDest.style.left = destinoX + "%";
-            pinDest.style.top = destinoY + "%";
-            pinDest.style.display = "block";
-
-            trazarRutaAutomatica(partidaX, partidaY, destinoX, destinoY);
-            document.getElementById("qr-container").style.display = "none";
-        }
-
-        function trazarRutaAutomatica(x1, y1, x2, y2) {
-            var img = document.getElementById("plano");
-            var w = img.clientWidth;
-            var h = img.clientHeight;
-
-            var px1 = (x1 / 100) * w;
-            var py1 = (y1 / 100) * h;
-            var px2 = (x2 / 100) * w;
-            var py2 = (y2 / 100) * h;
-
-            var interX = px1; 
-            var interY = py2; 
-
-            if (Math.abs(px1 - px2) < 50) {
-                interX = (px1 + px2) / 2;
-                interY = (py1 + py2) / 2;
-            }
-
-            var puntosSvg = px1 + "," + py1 + " " + interX + "," + interY + " " + px2 + "," + py2;
-
-            var polyline = document.getElementById("camino-polyline");
-            polyline.setAttribute("points", puntosSvg);
-        }
-
-        function reiniciarRuta() {
-            destinoX = null;
-            destinoY = null;
-            document.getElementById("pin-destino").style.display = "none";
-            document.getElementById("camino-polyline").setAttribute("points", "");
-            document.getElementById("qr-container").style.display = "none";
-            document.getElementById("comentario").value = "";
-            actualizarPinPartida(partidaX, partidaY);
-        }
-
-        function generarQR() {
-            if (destinoX === null || destinoY === null) {
-                alert("Por favor, haz clic en el mapa para marcar el lote de destino.");
-                return;
-            }
-
-            var nota = document.getElementById("comentario").value.trim();
-            var baseUrl = window.location.origin + window.location.pathname;
-            
-            var linkFinal = baseUrl + "?destX=" + destinoX.toFixed(2) + "&destY=" + destinoY.toFixed(2);
-            
-            if (nota !== "") {
-                linkFinal += "&nota=" + encodeURIComponent(nota);
-            }
-
-            var resultadoTexto = document.getElementById("resultado-texto");
-            resultadoTexto.innerHTML = nota !== "" ? "Destino: " + nota : "Ruta generada";
-
-            var qrcodeDiv = document.getElementById("qrcode");
-            qrcodeDiv.innerHTML = "";
-            
-            new QRCode(qrcodeDiv, {
-                text: linkFinal,
-                width: 150,
-                height: 150
-            });
-
-            document.getElementById("qr-container").style.display = "block";
-        }
+        // Mensaje de éxito al cargar
+        console.log("Mapa e imagen superpuesta cargados correctamente.");
     </script>
-
 </body>
 </html>

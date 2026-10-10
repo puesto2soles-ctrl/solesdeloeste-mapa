@@ -68,16 +68,17 @@
             height: auto;
             display: block;
         }
+        /* PIN REDUCIDO Y DE ALTA PRECISIÓN */
         #pin {
             position: absolute;
-            width: 18px;
-            height: 18px;
+            width: 8px;
+            height: 8px;
             background: #e74c3c;
-            border: 2px solid white;
+            border: 1.5px solid white;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             display: none;
-            box-shadow: 0 0 10px rgba(0,0,0,0.9);
+            box-shadow: 0 0 4px rgba(0,0,0,0.9);
             z-index: 10;
             pointer-events: none;
         }
@@ -138,7 +139,6 @@
         var posX = null;
         var posY = null;
 
-        // Al cargar la página, revisamos si la URL trae coordenadas compartidas (cuando el visitante escanea el QR)
         window.onload = function() {
             var urlParams = new URLSearchParams(window.location.search);
             var xParam = urlParams.get('x');
@@ -146,7 +146,6 @@
             var notaParam = urlParams.get('nota');
 
             if (xParam !== null && yParam !== null) {
-                // Modo Visitante: Ocultamos los controles de la garita y mostramos el pin fijo en el lugar exacto
                 posX = parseFloat(xParam);
                 posY = parseFloat(yParam);
 
@@ -155,7 +154,6 @@
                 pin.style.top = posY + "%";
                 pin.style.display = "block";
 
-                // Modificar la interfaz para el visitante
                 document.getElementById("panel-control").style.display = "none";
                 var inst = document.getElementById("instruccion");
                 inst.style.background = "#d4edda";
@@ -170,9 +168,7 @@
             }
         };
 
-        // Función para que el guardia marque haciendo clic en la garita
         function marcarPunto(event) {
-            // Si ya estamos en modo visitante, no permitimos cambiar los puntos
             var urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('x') !== null) return;
 
@@ -193,7 +189,6 @@
             document.getElementById("qr-container").style.display = "none";
         }
 
-        // Función para crear el código QR que apunta a la misma web con las coordenadas incrustadas
         function generarQR() {
             if (posX === null || posY === null) {
                 alert("Por favor, haz primero clic sobre el plano para marcar el destino.");
@@ -201,8 +196,6 @@
             }
 
             var nota = document.getElementById("comentario").value.trim();
-            
-            // Construir la URL actual agregando las coordenadas del punto seleccionado
             var baseUrl = window.location.origin + window.location.pathname;
             var linkFinal = baseUrl + "?x=" + posX.toFixed(2) + "&y=" + posY.toFixed(2);
             
@@ -216,7 +209,6 @@
             var qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = "";
             
-            // Generar el código QR con el enlace web integrado
             new QRCode(qrcodeDiv, {
                 text: linkFinal,
                 width: 150,

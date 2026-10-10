@@ -158,8 +158,8 @@
 
     <div>
         <div id="mapa-container" onclick="manejarClicMapa(event)">
-            <!-- Imagen del nuevo plano detallado -->
-            <img id="plano" src="1000043549.jpg" alt="Plano Detallado Soles del Oeste" onload="inicializarSistema()">
+            <!-- Imagen con el nombre original que incluye barra baja 2 -->
+            <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste" onload="inicializarSistema()">
             
             <!-- SVG para la polilínea automática -->
             <svg id="svg-ruta">
@@ -187,9 +187,8 @@
     </div>
 
     <script>
-        // Coordenadas fijas del Puesto 2 basadas en la nueva imagen (arriba a la derecha)
-        var partidaX = 92.5; 
-        var partidaY = 22.0;
+        var partidaX = 85; 
+        var partidaY = 50;
 
         var destinoX = null;
         var destinoY = null;
@@ -200,13 +199,11 @@
             var destY = urlParams.get('destY');
             var notaParam = urlParams.get('nota');
 
-            // Posicionar el pin azul del Puesto 2
             var pinPart = document.getElementById("pin-partida");
             pinPart.style.left = partidaX + "%";
             pinPart.style.top = partidaY + "%";
 
             if (destX !== null && destY !== null) {
-                // MODO VISITANTE (Abierto desde el QR)
                 destinoX = parseFloat(destX);
                 destinoY = parseFloat(destY);
 
@@ -215,10 +212,8 @@
                 pinDest.style.top = destinoY + "%";
                 pinDest.style.display = "block";
 
-                // Trazar la ruta inteligente automática
                 trazarRutaAutomatica(partidaX, partidaY, destinoX, destinoY);
 
-                // Cambiar título y ocultar controles de la garita
                 document.getElementById("titulo-principal").innerHTML = "📍 Indicaciones dadas por el Puesto 2";
                 document.getElementById("panel-control").style.display = "none";
                 
@@ -228,13 +223,13 @@
                 inst.style.borderColor = "#c3e6cb";
                 
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                inst.innerHTML = "🧭 <b>Guía de Navegación:</b> Te encuentras en el punto azul (Puesto 2). Sigue la línea azul por las calles principales hasta el punto rojo en <b>" + mensajeDestino + "</b>.";
+                inst.innerHTML = "🧭 <b>Guía de Navegación:</b> Te encuentras en el punto azul (Puesto 2). Sigue la línea azul por las calles hasta el punto rojo en <b>" + mensajeDestino + "</b>.";
             }
         }
 
         function manejarClicMapa(event) {
             var urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('destX') !== null) return; // Bloquear si es vista de visitante
+            if (urlParams.get('destX') !== null) return;
 
             var container = document.getElementById("mapa-container");
             var rect = container.getBoundingClientRect();
@@ -242,42 +237,34 @@
             destinoX = ((event.clientX - rect.left) / rect.width) * 100;
             destinoY = ((event.clientY - rect.top) / rect.height) * 100;
 
-            // Mostrar Pin Rojo de Destino
             var pinDest = document.getElementById("pin-destino");
             pinDest.style.left = destinoX + "%";
             pinDest.style.top = destinoY + "%";
             pinDest.style.display = "block";
 
-            // Calcular y dibujar automáticamente la ruta inteligente
             trazarRutaAutomatica(partidaX, partidaY, destinoX, destinoY);
 
             document.getElementById("qr-container").style.display = "none";
         }
 
-        // Algoritmo inteligente que simula los quiebres naturales por las avenidas del barrio
         function trazarRutaAutomatica(x1, y1, x2, y2) {
             var img = document.getElementById("plano");
             var w = img.clientWidth;
             var h = img.clientHeight;
 
-            // Convertir porcentajes a pixeles reales
             var px1 = (x1 / 100) * w;
             var py1 = (y1 / 100) * h;
             var px2 = (x2 / 100) * w;
             var py2 = (y2 / 100) * h;
 
-            // Puntos intermedios inteligentes basados en la distribución vial de Soles del Oeste
-            // Salimos del Puesto 2 hacia la arteria principal y bajamos o nos movemos en "L"
             var interX = px1; 
-            var interY = py2; // Genera un giro limpio en escuadra por las calles
+            var interY = py2; 
 
-            // Si el destino está muy arriba a la derecha, ajustamos el quiebre para suavizar la traza
             if (Math.abs(px1 - px2) < 50) {
                 interX = (px1 + px2) / 2;
                 interY = (py1 + py2) / 2;
             }
 
-            // Construir la cadena de puntos para la polilínea SVG
             var puntosSvg = px1 + "," + py1 + " " + interX + "," + interY + " " + px2 + "," + py2;
 
             var polyline = document.getElementById("camino-polyline");

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localizador Visual por Click - Puesto 2 (Soles del Oeste)</title>
-    <!-- Librería oficial para generar códigos QR locales -->
+    <title>Localizador con QR Interactivo - Puesto 2 (Soles del Oeste)</title>
+    <!-- Librería para generar el código QR de forma local -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body {
@@ -20,11 +20,11 @@
             margin: 10px 0;
         }
         .instruction-box {
-            background: #fff3cd;
-            color: #856404;
+            background: #e8f8f5;
+            color: #117a65;
             padding: 8px 12px;
             border-radius: 6px;
-            border: 1px solid #ffeeba;
+            border: #a3e4d7 1px solid;
             display: inline-block;
             margin-bottom: 10px;
             font-size: 0.9rem;
@@ -36,7 +36,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             margin-bottom: 10px;
-            display: block;
+            display: inline-block;
         }
         button {
             padding: 10px 20px;
@@ -60,7 +60,7 @@
             border-radius: 8px;
             overflow: hidden;
             background: #fff;
-            cursor: crosshair; /* Muestra una cruz para indicar que se puede hacer clic */
+            cursor: crosshair;
         }
         #plano {
             width: 100%;
@@ -70,14 +70,14 @@
         }
         #pin {
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background: #e74c3c;
             border: 2px solid white;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             display: none;
-            box-shadow: 0 0 8px rgba(0,0,0,0.9);
+            box-shadow: 0 0 10px rgba(0,0,0,0.9);
             z-index: 10;
             pointer-events: none;
         }
@@ -107,10 +107,10 @@
 </head>
 <body>
 
-    <h2>📍 Localizador Táctico - Puesto 2</h2>
+    <h2>📍 Localizador y Guía QR - Puesto 2</h2>
     
-    <div class="instruction-box">
-        👆 Haz clic directamente sobre el plano en el lugar exacto que visita el ingreso.
+    <div class="instruction-box" id="instruccion">
+        👆 Haz clic en el plano donde va el visitante y presiona generar QR.
     </div>
 
     <div>
@@ -120,69 +120,107 @@
         </div>
     </div>
 
-    <div class="control-box" style="max-width: 400px; margin: 10px auto;">
-        <label for="comentario">Nota o Destino (Opcional):</label><br>
-        <input type="text" id="comentario" placeholder="Ej: Visita Lote / Manzana..." style="width: 80%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+    <div class="control-box" id="panel-control" style="max-width: 400px; margin: 10px auto; display: block;">
+        <label for="comentario">Nota para el destino (Opcional):</label><br>
+        <input type="text" id="comentario" placeholder="Ej: Visita Manzana / Lote..." style="width: 85%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
         <br>
-        <button onclick="generarQR()">Generar QR para el Visitante</button>
+        <button onclick="generarQR()">Generar QR con el Punto Marcado</button>
     </div>
 
-    <!-- Contenedor del código QR generado -->
+    <!-- Contenedor del código QR -->
     <div id="qr-container">
         <div id="resultado-texto">Destino marcado</div>
-        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea este código para guiar al visitante:</p>
+        <p style="font-size: 0.8rem; color: #555; margin: 0;">Escanea con el celular para abrir el plano con la ubicación:</p>
         <div id="qrcode"></div>
     </div>
 
     <script>
-        // Variables para guardar las coordenadas porcentuales del último clic
         var posX = null;
         var posY = null;
 
+        // Al cargar la página, revisamos si la URL trae coordenadas compartidas (cuando el visitante escanea el QR)
+        window.onload = function() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var xParam = urlParams.get('x');
+            var yParam = urlParams.get('y');
+            var notaParam = urlParams.get('nota');
+
+            if (xParam !== null && yParam !== null) {
+                // Modo Visitante: Ocultamos los controles de la garita y mostramos el pin fijo en el lugar exacto
+                posX = parseFloat(xParam);
+                posY = parseFloat(yParam);
+
+                var pin = document.getElementById("pin");
+                pin.style.left = posX + "%";
+                pin.style.top = posY + "%";
+                pin.style.display = "block";
+
+                // Modificar la interfaz para el visitante
+                document.getElementById("panel-control").style.display = "none";
+                var inst = document.getElementById("instruccion");
+                inst.style.background = "#d4edda";
+                inst.style.color = "#155724";
+                inst.style.borderColor = "#c3e6cb";
+                
+                if (notaParam) {
+                    inst.innerHTML = "🎯 Destino del Visitante: " + decodeURIComponent(notaParam);
+                } else {
+                    inst.innerHTML = "🎯 Este es tu destino indicado por el Puesto 2.";
+                }
+            }
+        };
+
+        // Función para que el guardia marque haciendo clic en la garita
         function marcarPunto(event) {
+            // Si ya estamos en modo visitante, no permitimos cambiar los puntos
+            var urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('x') !== null) return;
+
             var container = document.getElementById("mapa-container");
             var rect = container.getBoundingClientRect();
             
-            // Obtener coordenadas relativas dentro de la imagen en porcentaje (0% a 100%)
             var x = event.clientX - rect.left;
             var y = event.clientY - rect.top;
             
             posX = (x / rect.width) * 100;
             posY = (y / rect.height) * 100;
 
-            // Posicionar el pin rojo visualmente
             var pin = document.getElementById("pin");
             pin.style.left = posX + "%";
             pin.style.top = posY + "%";
             pin.style.display = "block";
             
-            // Ocultar el QR anterior hasta que se vuelva a presionar el botón de generar
             document.getElementById("qr-container").style.display = "none";
         }
 
+        // Función para crear el código QR que apunta a la misma web con las coordenadas incrustadas
         function generarQR() {
             if (posX === null || posY === null) {
-                alert("Por favor, haz primero clic sobre el plano para marcar el destino del visitante.");
+                alert("Por favor, haz primero clic sobre el plano para marcar el destino.");
                 return;
             }
 
             var nota = document.getElementById("comentario").value.trim();
-            var detalleDestino = nota !== "" ? nota : "Destino en Soles del Oeste";
-
-            // Crear el texto que contendrá el QR (incluye las coordenadas exactas de la marca)
-            var dataQR = "Soles del Oeste - Puesto 2\nDestino: " + detalleDestino + "\nCoord X: " + posX.toFixed(1) + "%, Y: " + posY.toFixed(1) + "%";
+            
+            // Construir la URL actual agregando las coordenadas del punto seleccionado
+            var baseUrl = window.location.origin + window.location.pathname;
+            var linkFinal = baseUrl + "?x=" + posX.toFixed(2) + "&y=" + posY.toFixed(2);
+            
+            if (nota !== "") {
+                linkFinal += "&nota=" + encodeURIComponent(nota);
+            }
 
             var resultadoTexto = document.getElementById("resultado-texto");
-            resultadoTexto.innerHTML = "QR Generado: " + detalleDestino;
+            resultadoTexto.innerHTML = nota !== "" ? "Destino: " + nota : "Destino marcado";
 
             var qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = "";
             
-            // Generar el código QR localmente
+            // Generar el código QR con el enlace web integrado
             new QRCode(qrcodeDiv, {
-                text: dataQR,
-                width: 140,
-                height: 140
+                text: linkFinal,
+                width: 150,
+                height: 150
             });
 
             document.getElementById("qr-container").style.display = "block";

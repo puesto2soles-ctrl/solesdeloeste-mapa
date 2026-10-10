@@ -59,20 +59,41 @@
         }
         #pin {
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             background: #e74c3c;
             border: 2px solid white;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             display: none;
-            box-shadow: 0 0 6px rgba(0,0,0,0.6);
+            box-shadow: 0 0 6px rgba(0,0,0,0.8);
+            transition: all 0.3s ease;
+        }
+        #qr-container {
+            margin-top: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-block;
+            max-width: 300px;
+            display: none;
+        }
+        #qr-container img {
+            width: 150px;
+            height: 150px;
+            margin-top: 10px;
+        }
+        #resultado-texto {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
 
-    <h2>?? Localizador de Manzanas y Lotes - Puesto 2</h2>
+    <h2>?? Localizador de Lotes - Puesto 2</h2>
     
     <div class="control-box">
         <label for="manzana">Manzana:</label>
@@ -103,28 +124,43 @@
         <button onclick="ubicarLote()">Marcar</button>
     </div>
 
-    <div id="mapa-container">
-        <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
-        <div id="pin"></div>
+    <div>
+        <div id="mapa-container">
+            <img id="plano" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
+            <div id="pin"></div>
+        </div>
+    </div>
+
+    <!-- Contenedor del QR que aparece al marcar -->
+    <div id="qr-container">
+        <div id="resultado-texto">Destino seleccionado</div>
+        <p style="font-size: 0.85rem; color: #555; margin: 0;">Escanea para ver el destino:</p>
+        <img id="qr-img" src="" alt="Código QR de ubicación">
     </div>
 
     <script>
         var limitesLotes = {
-            "82": 85,
-            "83": 23,
-            "84": 10,
-            "85": 23,
-            "86": 18,
-            "87": 23,
-            "88": 29,
-            "89": 28,
-            "90": 20,
-            "91": 7,
-            "92": 17,
-            "93": 13,
-            "94": 18,
-            "95": 28,
-            "96": 16
+            "82": 85, "83": 23, "84": 10, "85": 23, "86": 18, 
+            "87": 23, "88": 29, "89": 28, "90": 20, "91": 7, 
+            "92": 17, "93": 13, "94": 18, "95": 28, "96": 16
+        };
+
+        var coordenadasManzanas = {
+            "82": { inicio: {top: 75, left: 15}, fin: {top: 90, left: 35} },
+            "83": { inicio: {top: 40, left: 85}, fin: {top: 60, left: 85} },
+            "84": { inicio: {top: 70, left: 80}, fin: {top: 75, left: 85} },
+            "85": { inicio: {top: 65, left: 55}, fin: {top: 75, left: 65} },
+            "86": { inicio: {top: 80, left: 38}, fin: {top: 92, left: 45} },
+            "87": { inicio: {top: 55, left: 35}, fin: {top: 65, left: 40} },
+            "88": { inicio: {top: 35, left: 40}, fin: {top: 50, left: 45} },
+            "89": { inicio: {top: 15, left: 40}, fin: {top: 25, left: 45} },
+            "90": { inicio: {top: 15, left: 65}, fin: {top: 25, left: 72} },
+            "91": { inicio: {top: 28, left: 75}, fin: {top: 32, left: 80} },
+            "92": { inicio: {top: 30, left: 60}, fin: {top: 38, left: 68} },
+            "93": { inicio: {top: 38, left: 57}, fin: {top: 45, left: 63} },
+            "94": { inicio: {top: 55, left: 53}, fin: {top: 65, left: 60} },
+            "95": { inicio: {top: 40, left: 73}, fin: {top: 50, left: 80} },
+            "96": { inicio: {top: 68, left: 35}, fin: {top: 75, left: 40} }
         };
 
         function actualizarLotes() {
@@ -145,43 +181,49 @@
 
         function ubicarLote() {
             var mz = document.getElementById("manzana").value;
-            var parcela = document.getElementById("parcela").value;
+            var parcela = parseInt(document.getElementById("parcela").value);
             var pin = document.getElementById("pin");
+            var qrContainer = document.getElementById("qr-container");
+            var qrImg = document.getElementById("qr-img");
+            var resultadoTexto = document.getElementById("resultado-texto");
             
-            if (mz === "") {
-                alert("Por favor selecciona una manzana.");
+            if (mz === "" || isNaN(parcela)) {
+                alert("Por favor selecciona una manzana y un lote válido.");
                 pin.style.display = "none";
+                qrContainer.style.display = "none";
                 return;
             }
 
-            var coordenadasManzanas = {
-                "82": { top: "82%", left: "20%" },
-                "83": { top: "45%", left: "89%" },
-                "84": { top: "72%", left: "83%" },
-                "85": { top: "72%", left: "60%" },
-                "86": { top: "87%", left: "41%" },
-                "87": { top: "60%", left: "37%" },
-                "88": { top: "42%", left: "43%" },
-                "89": { top: "18%", left: "43%" },
-                "90": { top: "18%", left: "69%" },
-                "91": { top: "30%", left: "78%" },
-                "92": { top: "33%", left: "64%" },
-                "93": { top: "42%", left: "60%" },
-                "94": { top: "60%", left: "57%" },
-                "95": { top: "43%", left: "77%" },
-                "96": { top: "72%", left: "37%" }
-            };
+            var datosMz = coordenadasManzanas[mz];
+            var totalLotes = limitesLotes[mz];
 
-            if (coordenadasManzanas[mz]) {
-                pin.style.top = coordenadasManzanas[mz].top;
-                pin.style.left = coordenadasManzanas[mz].left;
+            if (datosMz) {
+                var proporcion = (parcela - 1) / (totalLotes > 1 ? (totalLotes - 1) : 1);
+                
+                var topActual = datosMz.inicio.top + (datosMz.fin.top - datosMz.inicio.top) * proporcion;
+                var leftActual = datosMz.inicio.left + (datosMz.fin.left - datosMz.inicio.left) * proporcion;
+
+                pin.style.top = topActual + "%";
+                pin.style.left = leftActual + "%";
                 pin.style.display = "block";
+
+                // Actualizar texto y generar URL para el QR
+                resultadoTexto.innerHTML = "Manzana " + mz + " - Lote " + parcela;
+                
+                // Creamos un texto descriptivo o enlace que contendrá el QR
+                var textoQR = "Soles del Oeste - Destino: Manzana " + mz + ", Lote " + parcela;
+                var urlQR = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(textoQR);
+                
+                qrImg.src = urlQR;
+                qrContainer.style.display = "inline-block";
             } else {
-                alert("Manzana no encontrada.");
+                alert("Coordenadas no configuradas para esta manzana.");
                 pin.style.display = "none";
+                qrContainer.style.display = "none";
             }
         }
     </script>
 
 </body>
 </html>
+

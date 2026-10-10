@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guía de Ruta - Puesto 2 (Soles del Oeste)</title>
+    <title>Indicaciones dadas por el Puesto 2 (Soles del Oeste)</title>
     <!-- Librería para generar el código QR localmente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -169,7 +169,7 @@
 </head>
 <body>
 
-    <h2>📍 Creador de Rutas - Puesto 2</h2>
+    <h2 id="titulo-principal">📍 Creador de Rutas - Puesto 2</h2>
     
     <!-- BARRA DE OPCIONES -->
     <div class="toolbar" id="barra-herramientas">
@@ -202,7 +202,7 @@
         <label for="comentario">Nota para el destino (Opcional):</label><br>
         <input type="text" id="comentario" placeholder="Ej: Manzana / Lote..." style="width: 85%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
         <br>
-        <button class="action-btn" onclick="generarQR()">Generar QR con Ruta Limpia</button>
+        <button class="action-btn" onclick="generarQR()">Generar QR con Ruta Completa</button>
     </div>
 
     <!-- Contenedor del código QR -->
@@ -328,8 +328,22 @@
                     }
                 }
 
-                // DIBUJAR SOLAMENTE LA LÍNEA DEL CAMINO (LOS PINES QUEDAN OCULTOS PARA EL VISITANTE)
+                // MOSTRAR PIN AZUL (PARTIDA) Y PIN ROJO (DESTINO) PARA EL VISITANTE
+                var pinPart = document.getElementById("pin-partida");
+                pinPart.style.left = partidaX + "%";
+                pinPart.style.top = partidaY + "%";
+                pinPart.style.display = "block";
+
+                var pinDest = document.getElementById("pin-destino");
+                pinDest.style.left = destinoX + "%";
+                pinDest.style.top = destinoY + "%";
+                pinDest.style.display = "block";
+
+                // DIBUJAR LÍNEA DE RUTA
                 actualizarDibujoCamino();
+
+                // Cambiar el título principal para el visitante
+                document.getElementById("titulo-principal").innerHTML = "📍 Indicaciones dadas por el Puesto 2";
 
                 // Ocultar herramientas de edición y panel de control
                 document.getElementById("barra-herramientas").style.display = "none";
@@ -341,7 +355,7 @@
                 inst.style.borderColor = "#c3e6cb";
                 
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                inst.innerHTML = "🧭 <b>Guía de Navegación:</b> Simplemente sigue la línea azul marcada en el plano hacia <b>" + mensajeDestino + "</b>.";
+                inst.innerHTML = "🧭 <b>Guía de Navegación:</b> Estás en el punto azul (Puesto 2) y debes seguir la línea azul hasta el punto rojo en <b>" + mensajeDestino + "</b>.";
             } else {
                 var pinPart = document.getElementById("pin-partida");
                 pinPart.style.left = partidaX + "%";

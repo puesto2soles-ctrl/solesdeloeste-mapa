@@ -90,7 +90,7 @@
         button.reset-btn { background: #e74c3c; margin-left: 5px; }
         button.reset-btn:hover { background: #c0392b; }
 
-        /* Ocultar la caja de texto de instrucciones paso a paso que trae por defecto el plugin para mantener la interfaz limpia */
+        /* Ocultar la caja de texto de instrucciones paso a paso que trae por defecto el plugin */
         .leaflet-routing-container {
             display: none !important;
         }
@@ -150,12 +150,26 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script>
-        var map = L.map('map').setView([-33.1165, -64.4035], 15);
+        var map = L.map('map').setView([-33.115, -64.403], 15);
 
+        // Capa base de OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
+
+        // --- SUPERPOSICIÓN DE TU PLANO LOCAL (sol1.png) ---
+        var imageBounds = [
+            [-33.120714, -64.405171], // Suroeste (Puesto 2)
+            [-33.111862, -64.401485]  // Noreste (Puesto Principal)
+        ];
+        
+        var imageUrl = 'sol1.png';
+        L.imageOverlay(imageUrl, imageBounds, {
+            opacity: 0.85,
+            interactive: true
+        }).addTo(map);
+        --------------------------------------------------
 
         var puestoActual = "Puesto Principal";
         var coordOrigen = [-33.111862, -64.401485];
@@ -172,20 +186,17 @@
 
             map.setView(coordOrigen, 16);
 
-            // Si ya había un destino seleccionado, recalcular la ruta desde el nuevo puesto
             if (destinoLatLon) {
                 trazarRutaOSRM(destinoLatLon);
             }
         }
 
-        // Evento de clic en el mapa para calcular ruta automática por las calles
         map.on('click', function(e) {
             destinoLatLon = e.latlng;
             trazarRutaOSRM(destinoLatLon);
             document.getElementById("qr-container").style.display = "none";
         });
 
-        // Función que usa OSRM para trazar el camino exacto por el asfalto/calles
         function trazarRutaOSRM(dest) {
             if (controlRuta) {
                 map.removeControl(controlRuta);
@@ -223,8 +234,8 @@
             var baseUrl = window.location.origin + window.location.pathname;
 
             var linkFinal = baseUrl + "?lat=" + destinoLatLon.lat.toFixed(6) + "&lng=" + destinoLatLon.lng.toFixed(6) + 
-                            "&puesto=" + encodeURIComponent(puestoActual) + 
-                            "&olat=" + coordOrigen[0] + "&olng=" + coordOrigen[1];
+                          "&puesto=" + encodeURIComponent(puestoActual) + 
+                          "&olat=" + coordOrigen[0] + "&olng=" + coordOrigen[1];
             if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
 
             document.getElementById("resultado-texto").innerHTML = "Ruta desde " + puestoActual + (nota ? " (" + nota + ")" : "");
@@ -234,7 +245,6 @@
             document.getElementById("qr-container").style.display = "block";
         }
 
-        // Cargar parámetros si se abre desde el QR en el celular del visitante
         window.onload = function() {
             var urlParams = new URLSearchParams(window.location.search);
             var lat = urlParams.get('lat'), lng = urlParams.get('lng'), puestoParam = urlParams.get('puesto');

@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navegador Inteligente - Soles del Oeste</title>
+    <title>Navegador Automático por Calles - Soles del Oeste</title>
     
     <!-- Estilos CSS de Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Estilos CSS de Leaflet Routing Machine (Ruteo automático) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     
     <!-- Librería para generar códigos QR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -39,7 +42,7 @@
         #map { 
             width: 100%; 
             max-width: 600px; 
-            height: 60vh; 
+            height: 55vh; 
             margin: 0 auto; 
             border: 2px solid #bdc3c7;
             border-radius: 8px;
@@ -87,6 +90,11 @@
         button.reset-btn { background: #e74c3c; margin-left: 5px; }
         button.reset-btn:hover { background: #c0392b; }
 
+        /* Ocultar la caja de texto de instrucciones paso a paso que trae por defecto el plugin para mantener la interfaz limpia */
+        .leaflet-routing-container {
+            display: none !important;
+        }
+
         #qr-container {
             margin-top: 15px;
             background: white;
@@ -107,10 +115,10 @@
 </head>
 <body>
 
-    <h2>📍 Navegador GPS - Soles del Oeste</h2>
+    <h2>📍 Navegador Automático por Calles - Soles del Oeste</h2>
     
     <div class="instruction-box" id="instruccion">
-        🎯 Selecciona el puesto de origen y haz clic en el mapa para marcar el lote de destino.
+        🎯 Selecciona el puesto de origen y haz clic en cualquier punto del barrio para calcular la ruta exacta por las calles.
     </div>
 
     <!-- Contenedor del Mapa -->
@@ -138,99 +146,83 @@
         <div id="qrcode"></div>
     </div>
 
-    <!-- Script de Leaflet -->
+    <!-- Scripts de Leaflet y del Motor de Ruteo Automático (OSRM) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script>
-        // Inicializar mapa con coordenadas GPS reales centradas en el barrio
         var map = L.map('map').setView([-33.1165, -64.4035], 15);
 
-        // Añadir la capa base de OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Coordenadas iniciales por defecto (Puesto Principal)
         var puestoActual = "Puesto Principal";
         var coordOrigen = [-33.111862, -64.401485];
-        var markerOrigen = null;
-        var markerDestino = null;
-        var polylineRuta = null;
+        var controlRuta = null;
+        var destinoLatLon = null;
 
-        // Crear marcador azul para el origen
-        markerOrigen = L.circleMarker(coordOrigen, {
-            radius: 8, color: 'white', weight: 2, fillColor: '#3498db', fillOpacity: 1
-        }).addTo(map).bindPopup("<b>Origen:</b> " + puestoActual);
-
-        // Función para cambiar de puesto de origen
         function cambiarPuesto(nombre, lat, lng) {
             puestoActual = nombre;
             coordOrigen = [lat, lng];
 
-            // Actualizar botones activos
             document.getElementById("btn-principal").className = (nombre === "Puesto Principal") ? "activo" : "";
             document.getElementById("btn-p1").className = (nombre === "Puesto 1") ? "activo" : "";
             document.getElementById("btn-p2").className = (nombre === "Puesto 2") ? "activo" : "";
 
-            markerOrigen.setLatLng(coordOrigen);
-            markerOrigen.bindPopup("<b>Origen:</b> " + puestoActual);
             map.setView(coordOrigen, 16);
 
-            if (markerDestino) trazarRuta();
+            // Si ya había un destino seleccionado, recalcular la ruta desde el nuevo puesto
+            if (destinoLatLon) {
+                trazarRutaOSRM(destinoLatLon);
+            }
         }
 
-        // Evento al hacer clic en el mapa para marcar el destino
+        // Evento de clic en el mapa para calcular ruta automática por las calles
         map.on('click', function(e) {
-            var latLngDestino = e.latlng;
-
-            if (markerDestino) {
-                markerDestino.setLatLng(latLngDestino);
-            } else {
-                markerDestino = L.circleMarker(latLngDestino, {
-                    radius: 8, color: 'white', weight: 2, fillColor: '#e74c3c', fillOpacity: 1
-                }).addTo(map).bindPopup("Destino seleccionado");
-            }
-
-            trazarRuta();
+            destinoLatLon = e.latlng;
+            trazarRutaOSRM(destinoLatLon);
             document.getElementById("qr-container").style.display = "none";
         });
 
-        // Trazar línea de ruta en escuadra adaptada a coordenadas GPS
-        function trazarRuta() {
-            var dest = markerDestino.getLatLng();
-            
-            // Ruta ortogonal (en L) usando latitud del origen y longitud del destino como punto de giro
-            var puntosCamino = [
-                coordOrigen,
-                [coordOrigen[0], dest.lng],
-                [dest.lat, dest.lng]
-            ];
-
-            if (polylineRuta) {
-                polylineRuta.setLatLngs(puntosCamino);
-            } else {
-                polylineRuta = L.polyline(puntosCamino, {
-                    color: '#3498db',
-                    weight: 4,
-                    opacity: 0.8
-                }).addTo(map);
+        // Función que usa OSRM para trazar el camino exacto por el asfalto/calles
+        function trazarRutaOSRM(dest) {
+            if (controlRuta) {
+                map.removeControl(controlRuta);
             }
+
+            controlRuta = L.Routing.control({
+                waypoints: [
+                    L.latLng(coordOrigen[0], coordOrigen[1]),
+                    L.latLng(dest.lat, dest.lng)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                draggableWaypoints: false,
+                fitSelectedRoutes: false,
+                show: false,
+                lineOptions: {
+                    styles: [{ color: '#3498db', weight: 5, opacity: 0.8 }]
+                }
+            }).addTo(map);
         }
 
         function reiniciarRuta() {
-            if (markerDestino) { map.removeLayer(markerDestino); markerDestino = null; }
-            if (polylineRuta) { map.removeLayer(polylineRuta); polylineRuta = null; }
+            if (controlRuta) {
+                map.removeControl(controlRuta);
+                controlRuta = null;
+            }
+            destinoLatLon = null;
             document.getElementById("qr-container").style.display = "none";
             document.getElementById("comentario").value = "";
         }
 
         function generarQR() {
-            if (!markerDestino) { alert("Haz clic en el mapa para marcar un destino."); return; }
-            var dest = markerDestino.getLatLng();
+            if (!destinoLatLon) { alert("Haz clic en el mapa para marcar un destino."); return; }
             var nota = document.getElementById("comentario").value.trim();
             var baseUrl = window.location.origin + window.location.pathname;
 
-            var linkFinal = baseUrl + "?lat=" + dest.lat.toFixed(6) + "&lng=" + dest.lng.toFixed(6) + 
+            var linkFinal = baseUrl + "?lat=" + destinoLatLon.lat.toFixed(6) + "&lng=" + destinoLatLon.lng.toFixed(6) + 
                             "&puesto=" + encodeURIComponent(puestoActual) + 
                             "&olat=" + coordOrigen[0] + "&olng=" + coordOrigen[1];
             if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
@@ -252,19 +244,13 @@
                 if (olat !== null && olng !== null) coordOrigen = [parseFloat(olat), parseFloat(olng)];
                 if (puestoParam) puestoActual = decodeURIComponent(puestoParam);
 
-                markerOrigen.setLatLng(coordOrigen);
-                markerOrigen.bindPopup("<b>Origen:</b> " + puestoActual);
-
-                markerDestino = L.circleMarker([parseFloat(lat), parseFloat(lng)], {
-                    radius: 8, color: 'white', weight: 2, fillColor: '#e74c3c', fillOpacity: 1
-                }).addTo(map);
-
-                trazarRuta();
+                destinoLatLon = L.latLng(parseFloat(lat), parseFloat(lng));
+                trazarRutaOSRM(destinoLatLon);
                 map.setView(coordOrigen, 16);
 
                 document.querySelector(".control-panel").style.display = "none";
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                document.getElementById("instruccion").innerHTML = "🧭 Te encuentras saliendo del <b>" + puestoActual + "</b>. Sigue la ruta marcada hacia <b>" + mensajeDestino + "</b>.";
+                document.getElementById("instruccion").innerHTML = "🧭 Sigue la ruta marcada desde el <b>" + puestoActual + "</b> hacia <b>" + mensajeDestino + "</b>.";
                 document.querySelector("h2").innerHTML = "📍 Indicaciones de Guía";
             }
         };

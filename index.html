@@ -157,15 +157,15 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // --- LÍMITES CALIBRADOS PARA EL PLANO ---
+        // --- LÍMITES EXACTOS OBTENIDOS DESDE MAP WARPER (KML) ---
         var imageBounds = [
-            [-33.123500, -64.407500], // Esquina Suroeste
-            [-33.110000, -64.398000]  // Esquina Noreste
+            [-33.1232533, -64.4058227], // Esquina Suroeste (South, West)
+            [-33.1126394, -64.399919]   // Esquina Noreste (North, East)
         ];
         
         var imageUrl = 'sol1.png';
         L.imageOverlay(imageUrl, imageBounds, {
-            opacity: 0.9,
+            opacity: 0.85,
             interactive: true
         }).addTo(map);
 

@@ -21,20 +21,39 @@
             font-size: 1.1rem;
             margin: 10px 0;
         }
+        .mode-selector-box {
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin-bottom: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .mode-selector-box select {
+            padding: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+            background: #ecf0f1;
+            width: 100%;
+            cursor: pointer;
+        }
         .instruction-box {
             background: #e8f8f5;
             color: #117a65;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-radius: 6px;
             border: #a3e4d7 1px solid;
             display: inline-block;
             margin-bottom: 10px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: bold;
             max-width: 500px;
         }
         
-        /* Contenedor de la imagen perfectamente nítido y sin distorsión */
         #map-container {
             position: relative;
             width: 100%;
@@ -47,28 +66,32 @@
             overflow: hidden;
             cursor: crosshair;
         }
+
+        /* Máxima nitidez y anti-alisado para la imagen PNG */
         #map-image {
             width: 100%;
             height: auto;
             display: block;
-            /* Máxima nitidez en navegadores modernos */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
         }
 
-        /* Estilos de los pines colocados sobre la imagen */
+        /* Pines de 6 píxeles */
         .pin {
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             border: 2px solid white;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 5px rgba(0,0,0,0.7);
+            box-shadow: 0 0 4px rgba(0,0,0,0.8);
             pointer-events: none;
+            z-index: 10;
         }
-        .pin-origen { background-color: #e74c3c; } /* Rojo */
-        .pin-destino { background-color: #3498db; } /* Azul */
+        .pin-origen { background-color: #e74c3c; } 
+        .pin-destino { background-color: #3498db; } 
 
         .control-panel { 
             margin-top: 15px;
@@ -117,11 +140,18 @@
 
     <h2>📍 Marcador de Ubicación - Soles del Oeste</h2>
     
-    <div class="instruction-box" id="instruccion">
-        🔴 <b>Paso 1:</b> Haz clic sobre el plano para marcar <b>dónde se encuentran ahora mismo</b>.
+    <div class="mode-selector-box">
+        <label for="modoSeleccion" style="font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 4px; color: #34495e;">¿Qué deseas marcar en el plano?</label>
+        <select id="modoSeleccion" onchange="cambiarModo()">
+            <option value="origen">🔴 Marcar: Dónde nos encontramos ahora</option>
+            <option value="destino">🔵 Marcar: Destino al que nos dirigimos</option>
+        </select>
     </div>
 
-    <!-- Contenedor con la imagen PNG directa -->
+    <div class="instruction-box" id="instruccion">
+        Haz clic en el plano para colocar el punto de <b>Tu Ubicación Actual</b>.
+    </div>
+
     <div id="map-container" onclick="marcarPunto(event)">
         <img id="map-image" src="sol1.png" alt="Plano Soles del Oeste">
     </div>
@@ -134,7 +164,6 @@
         <button class="action-btn reset-btn" onclick="reiniciarRuta()">Limpiar</button>
     </div>
 
-    <!-- Contenedor del QR -->
     <div id="qr-container">
         <div id="resultado-texto" style="font-weight: bold; font-size: 0.9rem; color: #2c3e50;">Puntos marcados</div>
         <p style="font-size: 0.80rem; color: #555; margin: 5px 0;">Escanea con el celular:</p>
@@ -145,21 +174,34 @@
         let origenPorcentaje = null;
         let destinoPorcentaje = null;
 
+        function cambiarModo() {
+            const modo = document.getElementById('modoSeleccion').value;
+            const instruccion = document.getElementById('instruccion');
+            if (modo === 'origen') {
+                instruccion.innerHTML = "Haz clic en el plano para colocar el punto de <b>Tu Ubicación Actual</b>.";
+            } else {
+                instruccion.innerHTML = "Haz clic en el plano para colocar el punto de <b>Destino</b>.";
+            }
+        }
+
         function marcarPunto(event) {
             const container = document.getElementById('map-container');
             const rect = container.getBoundingClientRect();
             
-            // Coordenadas exactas del clic relativas a la imagen en porcentaje (0 a 100)
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
             
             const xPorcentaje = (xPx / container.clientWidth) * 100;
             const yPorcentaje = (yPx / container.clientHeight) * 100;
 
-            if (!origenPorcentaje) {
+            const modo = document.getElementById('modoSeleccion').value;
+
+            if (modo === 'origen') {
                 origenPorcentaje = { x: xPorcentaje, y: yPorcentaje };
                 
-                // Crear pin rojo de origen
+                const pinAnterior = document.getElementById('pin-origen');
+                if (pinAnterior) pinAnterior.remove();
+
                 const pin = document.createElement('div');
                 pin.className = 'pin pin-origen';
                 pin.style.left = xPorcentaje + '%';
@@ -167,20 +209,18 @@
                 pin.id = 'pin-origen';
                 container.appendChild(pin);
 
-                document.getElementById("instruccion").innerHTML = "🎯 <b>Paso 2:</b> Ahora haz clic en el plano para marcar el <b>destino</b>.";
-            
-            } else if (!destinoPorcentaje) {
+            } else {
                 destinoPorcentaje = { x: xPorcentaje, y: yPorcentaje };
 
-                // Crear pin azul de destino
+                const pinAnterior = document.getElementById('pin-destino');
+                if (pinAnterior) pinAnterior.remove();
+
                 const pin = document.createElement('div');
                 pin.className = 'pin pin-destino';
                 pin.style.left = xPorcentaje + '%';
                 pin.style.top = yPorcentaje + '%';
                 pin.id = 'pin-destino';
                 container.appendChild(pin);
-
-                document.getElementById("instruccion").innerHTML = "✅ Puntos marcados. Presiona <b>Generar QR</b> o <b>Limpiar</b> para empezar de nuevo.";
             }
         }
 
@@ -195,12 +235,13 @@
 
             document.getElementById("qr-container").style.display = "none";
             document.getElementById("comentario").value = "";
-            document.getElementById("instruccion").innerHTML = "🔴 <b>Paso 1:</b> Haz clic sobre el plano para marcar <b>dónde se encuentran ahora mismo</b>.";
+            document.getElementById('modoSeleccion').value = "origen";
+            cambiarModo();
         }
 
         function generarQR() {
             if (!origenPorcentaje || !destinoPorcentaje) { 
-                alert("Debes marcar primero tu ubicación actual y luego el destino en el plano."); 
+                alert("Debes marcar tanto tu ubicación actual (rojo) como el destino (azul) antes de generar el QR."); 
                 return; 
             }
             var nota = document.getElementById("comentario").value.trim();
@@ -226,14 +267,12 @@
             if (ox !== null && dx !== null) {
                 const container = document.getElementById('map-container');
 
-                // Mostrar pin de origen recibido por URL
                 const pinO = document.createElement('div');
                 pinO.className = 'pin pin-origen';
                 pinO.style.left = ox + '%';
                 pinO.style.top = oy + '%';
                 container.appendChild(pinO);
 
-                // Mostrar pin de destino recibido por URL
                 const pinD = document.createElement('div');
                 pinD.className = 'pin pin-destino';
                 pinD.style.left = dx + '%';
@@ -241,8 +280,9 @@
                 container.appendChild(pinD);
 
                 document.querySelector(".control-panel").style.display = "none";
+                document.querySelector(".mode-selector-box").style.display = "none";
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                document.getElementById("instruccion").innerHTML = "🧭 Tu ubicación actual marcada hacia <b>" + mensajeDestino + "</b>.";
+                document.getElementById("instruccion").innerHTML = "🧭 Ubicación actual marcada hacia <b>" + mensajeDestino + "</b>.";
                 document.querySelector("h2").innerHTML = "📍 Puntos de Referencia";
             }
         };

@@ -67,7 +67,7 @@
             cursor: crosshair;
         }
 
-        /* Renderizado estricto en alta calidad para los píxeles originales de la imagen */
+        /* Renderizado nativo manteniendo los megapíxeles originales sin alteraciones */
         #map-image {
             width: 100%;
             height: auto;
@@ -77,7 +77,7 @@
             image-rendering: pixelated;
         }
 
-        /* Pines exactos de 6 píxeles */
+        /* Pines precisos optimizados */
         .pin {
             position: absolute;
             width: 6px;
@@ -151,7 +151,7 @@
         Haz clic en el plano para colocar el punto de <b>Tu Ubicación Actual</b>.
     </div>
 
-    <!-- Imagen original en su formato nativo sin modificaciones de ángulo -->
+    <!-- Imagen original en alta definición y sin rotaciones -->
     <div id="map-container" onclick="marcarPunto(event)">
         <img id="map-image" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
     </div>

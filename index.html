@@ -67,17 +67,23 @@
             cursor: crosshair;
         }
 
-        /* Renderizado nativo manteniendo los megapíxeles originales sin alteraciones */
+        /* 
+           CORRECCIÓN DE ORIENTACIÓN Y NITIDEZ: 
+           Como la imagen original está girada de lado, aplicamos rotate(90deg) 
+           (o -90deg según el sentido) y forzamos el renderizado nítido de píxeles.
+        */
         #map-image {
             width: 100%;
             height: auto;
             display: block;
+            transform: rotate(90deg); /* Endereza la imagen guardada */
+            margin: 15% 0; /* Compensa el espacio de la rotación */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
         }
 
-        /* Pines precisos optimizados */
+        /* Pines exactos de 6 píxeles */
         .pin {
             position: absolute;
             width: 6px;
@@ -151,7 +157,6 @@
         Haz clic en el plano para colocar el punto de <b>Tu Ubicación Actual</b>.
     </div>
 
-    <!-- Imagen original en alta definición y sin rotaciones -->
     <div id="map-container" onclick="marcarPunto(event)">
         <img id="map-image" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
     </div>

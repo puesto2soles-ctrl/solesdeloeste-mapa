@@ -69,7 +69,7 @@
             width: 100%;
             height: auto;
             display: block;
-            /* Corregimos la orientación 180 grados exacta y máxima nitidez nativa */
+            /* Aplicamos la rotación de 180 grados sin alterar el contenedor de clics */
             transform: rotate(180deg);
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
@@ -207,19 +207,18 @@
         }
 
         function marcarPunto(event) {
-            const img = document.getElementById('map-image');
-            const rect = img.getBoundingClientRect();
+            const container = document.getElementById('map-container');
+            const rect = container.getBoundingClientRect();
             
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
 
             if (xPx < 0 || yPx < 0 || xPx > rect.width || yPx > rect.height) return;
 
-            // Como la imagen está rotada 180 grados, invertimos las proporciones del clic para que coincidan exactamente
+            // Como la imagen está rotada 180°, invertimos las coordenadas visuales 
+            // para que los pines coincidan exactamente con el lugar donde se hace clic.
             const xPorcentaje = ((rect.width - xPx) / rect.width) * 100;
             const yPorcentaje = ((rect.height - yPx) / rect.height) * 100;
-            
-            const container = document.getElementById('map-container');
 
             if (modoActual === 'origen') {
                 puntoOrigen = { x: xPorcentaje, y: yPorcentaje };

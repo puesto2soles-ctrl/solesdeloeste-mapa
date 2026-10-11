@@ -3,132 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marcador de Ubicación - Soles del Oeste</title>
-    
+    <title>Plano Táctico - Puesto 2</title>
     <!-- Librería para generar códigos QR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 10px; 
-            text-align: center; 
-            background: #f0f2f5; 
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 10px;
+            text-align: center;
+            color: #333;
         }
         h2 {
-            color: #1a252f;
-            font-size: 1.1rem;
-            margin: 10px 0;
+            font-size: 1.2rem;
+            margin: 8px 0;
+            color: #1e293b;
         }
-        .mode-selector-box {
-            background: #ffffff;
+        /* Pestañas / Selector de Modo */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .tab-btn {
+            flex: 1;
             padding: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 2px solid #cbd5e1;
+            background: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: inline-block;
-            margin-bottom: 10px;
-            max-width: 500px;
-            width: 90%;
-        }
-        .mode-selector-box select {
-            padding: 8px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            border-radius: 5px;
-            border: 1px solid #bdc3c7;
-            background: #ecf0f1;
-            width: 100%;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
-        .instruction-box {
-            background: #e8f8f5;
-            color: #117a65;
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: #a3e4d7 1px solid;
-            display: inline-block;
-            margin-bottom: 10px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            max-width: 500px;
+        .tab-btn.active-origen {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
         }
-        
+        .tab-btn.active-destino {
+            background-color: #e0f2fe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+        /* Contenedor del mapa */
         #map-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            background: #fff;
-            overflow: hidden; 
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
             cursor: crosshair;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
-
-        /* 
-           CORRECCIÓN DE ORIENTACIÓN Y NITIDEZ: 
-           Como la imagen original está girada de lado, aplicamos rotate(90deg) 
-           (o -90deg según el sentido) y forzamos el renderizado nítido de píxeles.
-        */
         #map-image {
             width: 100%;
             height: auto;
             display: block;
-            transform: rotate(90deg); /* Endereza la imagen guardada */
-            margin: 15% 0; /* Compensa el espacio de la rotación */
+            /* Renderizado nítido puro nativo sin rotaciones */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
-            image-rendering: pixelated;
         }
-
-        /* Pines exactos de 6 píxeles */
+        /* Pines tácticos */
         .pin {
             position: absolute;
-            width: 6px;
-            height: 6px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            border: 2px solid white;
+            border: 2px solid #ffffff;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 4px rgba(0,0,0,0.9);
+            box-shadow: 0 0 6px rgba(0,0,0,0.8);
             pointer-events: none;
             z-index: 10;
         }
-        .pin-origen { background-color: #e74c3c; } 
-        .pin-destino { background-color: #3498db; } 
-
-        .control-panel { 
-            margin-top: 15px;
-            padding: 12px; 
-            background: white; 
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .pin-origen { background-color: #ef4444; }
+        .pin-destino { background-color: #3b82f6; }
+        
+        /* Panel de control inferior */
+        .control-panel {
+            margin-top: 12px;
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             display: inline-block;
             max-width: 500px;
-            width: 90%;
+            width: 100%;
         }
-        button.action-btn {
-            padding: 8px 16px;
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
             font-size: 0.95rem;
-            border-radius: 5px;
-            border: none;
-            background: #27ae60;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 10px;
         }
-        button.action-btn:hover { background: #219653; }
-        button.reset-btn { background: #e74c3c; margin-left: 5px; }
-        button.reset-btn:hover { background: #c0392b; }
-
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        button.btn-main {
+            flex: 2;
+            padding: 10px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button.btn-main:hover { background-color: #059669; }
+        button.btn-reset {
+            flex: 1;
+            padding: 10px;
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button.btn-reset:hover { background-color: #dc2626; }
+        
+        /* Contenedor QR */
         #qr-container {
             margin-top: 15px;
             background: white;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             max-width: 300px;
             margin-left: auto;
             margin-right: auto;
@@ -143,49 +157,51 @@
 </head>
 <body>
 
-    <h2>📍 Marcador de Ubicación - Soles del Oeste</h2>
-    
-    <div class="mode-selector-box">
-        <label for="modoSeleccion" style="font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 4px; color: #34495e;">¿Qué deseas marcar en el plano?</label>
-        <select id="modoSeleccion" onchange="cambiarModo()">
-            <option value="origen">🔴 Marcar: Dónde nos encontramos ahora</option>
-            <option value="destino">🔵 Marcar: Destino al que nos dirigimos</option>
-        </select>
+    <h2>📍 Puesto 2 - Soles del Oeste</h2>
+
+    <!-- Pestañas de selección -->
+    <div class="tabs-container">
+        <button id="btnTabOrigen" class="tab-btn active-origen" onclick="cambiarModo('origen')">🔴 1. Mi Ubicación</button>
+        <button id="btnTabDestino" class="tab-btn" onclick="cambiarModo('destino')">🔵 2. Destino</button>
     </div>
 
-    <div class="instruction-box" id="instruccion">
-        Haz clic en el plano para colocar el punto de <b>Tu Ubicación Actual</b>.
-    </div>
-
+    <!-- Contenedor del mapa limpio -->
     <div id="map-container" onclick="marcarPunto(event)">
         <img id="map-image" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
     </div>
 
+    <!-- Panel inferior -->
     <div class="control-panel">
-        <label for="comentario" style="font-size: 0.85rem;">Nota para el destino (Opcional):</label><br>
-        <input type="text" id="comentario" placeholder="Ej: Manzana / Lote / Propietario..." style="width: 85%; padding: 6px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
-        <br>
-        <button class="action-btn" onclick="generarQR()">Generar QR</button>
-        <button class="action-btn reset-btn" onclick="reiniciarRuta()">Limpiar</button>
+        <input type="text" id="comentario" placeholder="Nota opcional (Ej: Manzana 87, Lote 14)...">
+        <div class="action-buttons">
+            <button class="btn-main" onclick="generarQR()">Generar QR</button>
+            <button class="btn-reset" onclick="reiniciarTodo()">Limpiar</button>
+        </div>
     </div>
 
+    <!-- Sección QR -->
     <div id="qr-container">
-        <div id="resultado-texto" style="font-weight: bold; font-size: 0.9rem; color: #2c3e50;">Puntos marcados</div>
-        <p style="font-size: 0.80rem; color: #555; margin: 5px 0;">Escanea con el celular:</p>
+        <div id="resultado-titulo" style="font-weight: bold; font-size: 0.95rem; color: #1e293b;">Ruta Marcada</div>
+        <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0;">Escanea para ver la ruta en el celular:</p>
         <div id="qrcode"></div>
     </div>
 
     <script>
-        let origenPorcentaje = null;
-        let destinoPorcentaje = null;
+        let modoActual = 'origen'; // 'origen' o 'destino'
+        let puntoOrigen = null;
+        let puntoDestino = null;
 
-        function cambiarModo() {
-            const modo = document.getElementById('modoSeleccion').value;
-            const instruccion = document.getElementById('instruccion');
+        function cambiarModo(modo) {
+            modoActual = modo;
+            const btnO = document.getElementById('btnTabOrigen');
+            const btnD = document.getElementById('btnTabDestino');
+
             if (modo === 'origen') {
-                instruccion.innerHTML = "Haz clic en el plano para colocar el punto de <b>Tu Ubicación Actual</b>.";
+                btnO.className = "tab-btn active-origen";
+                btnD.className = "tab-btn";
             } else {
-                instruccion.innerHTML = "Haz clic en el plano para colocar el punto de <b>Destino</b>.";
+                btnO.className = "tab-btn";
+                btnD.className = "tab-btn active-destino";
             }
         }
 
@@ -195,20 +211,18 @@
             
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
-            
+
             if (xPx < 0 || yPx < 0 || xPx > rect.width || yPx > rect.height) return;
 
             const xPorcentaje = (xPx / rect.width) * 100;
             const yPorcentaje = (yPx / rect.height) * 100;
-
-            const modo = document.getElementById('modoSeleccion').value;
             const container = document.getElementById('map-container');
 
-            if (modo === 'origen') {
-                origenPorcentaje = { x: xPorcentaje, y: yPorcentaje };
+            if (modoActual === 'origen') {
+                puntoOrigen = { x: xPorcentaje, y: yPorcentaje };
                 
-                const pinAnterior = document.getElementById('pin-origen');
-                if (pinAnterior) pinAnterior.remove();
+                const pinViejo = document.getElementById('pin-origen');
+                if (pinViejo) pinViejo.remove();
 
                 const pin = document.createElement('div');
                 pin.className = 'pin pin-origen';
@@ -217,11 +231,14 @@
                 pin.id = 'pin-origen';
                 container.appendChild(pin);
 
-            } else {
-                destinoPorcentaje = { x: xPorcentaje, y: yPorcentaje };
+                // Cambiar automáticamente a destino para agilizar el uso en guardia
+                cambiarModo('destino');
 
-                const pinAnterior = document.getElementById('pin-destino');
-                if (pinAnterior) pinAnterior.remove();
+            } else {
+                puntoDestino = { x: xPorcentaje, y: yPorcentaje };
+
+                const pinViejo = document.getElementById('pin-destino');
+                if (pinViejo) pinViejo.remove();
 
                 const pin = document.createElement('div');
                 pin.className = 'pin pin-destino';
@@ -232,45 +249,47 @@
             }
         }
 
-        function reiniciarRuta() {
-            origenPorcentaje = null;
-            destinoPorcentaje = null;
+        function reiniciarTodo() {
+            puntoOrigen = null;
+            puntoDestino = null;
             
-            const pinOrigen = document.getElementById('pin-origen');
-            const pinDestino = document.getElementById('pin-destino');
-            if (pinOrigen) pinOrigen.remove();
-            if (pinDestino) pinDestino.remove();
+            const pinO = document.getElementById('pin-origen');
+            const pinD = document.getElementById('pin-destino');
+            if (pinO) pinO.remove();
+            if (pinD) pinD.remove();
 
             document.getElementById("qr-container").style.display = "none";
             document.getElementById("comentario").value = "";
-            document.getElementById('modoSeleccion').value = "origen";
-            cambiarModo();
+            cambiarModo('origen');
         }
 
         function generarQR() {
-            if (!origenPorcentaje || !destinoPorcentaje) { 
-                alert("Debes marcar tanto tu ubicación actual (rojo) como el destino (azul) antes de generar el QR."); 
-                return; 
+            if (!puntoOrigen || !puntoDestino) {
+                alert("Debes marcar tanto tu punto de inicio (rojo) como el destino (azul).");
+                return;
             }
-            var nota = document.getElementById("comentario").value.trim();
-            var baseUrl = window.location.origin + window.location.pathname;
 
-            var linkFinal = baseUrl + "?ox=" + origenPorcentaje.x.toFixed(2) + "&oy=" + origenPorcentaje.y.toFixed(2) + 
-                          "&dx=" + destinoPorcentaje.x.toFixed(2) + "&dy=" + destinoPorcentaje.y.toFixed(2);
-            if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
+            const nota = document.getElementById("comentario").value.trim();
+            const baseUrl = window.location.origin + window.location.pathname;
 
-            document.getElementById("resultado-texto").innerHTML = "Ubicación y destino" + (nota ? " (" + nota + ")" : "");
-            var qrcodeDiv = document.getElementById("qrcode");
+            let linkFinal = baseUrl + `?ox=${puntoOrigen.x.toFixed(2)}&oy=${puntoOrigen.y.toFixed(2)}&dx=${puntoDestino.x.toFixed(2)}&dy=${puntoDestino.y.toFixed(2)}`;
+            if (nota !== "") {
+                linkFinal += `&nota=${encodeURIComponent(nota)}`;
+            }
+
+            document.getElementById("resultado-titulo").innerHTML = nota ? `Ruta: ${nota}` : "Ruta Marcada";
+            const qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = "";
             new QRCode(qrcodeDiv, { text: linkFinal, width: 140, height: 140 });
             document.getElementById("qr-container").style.display = "block";
         }
 
+        // Carga automática si se abre un link con coordenadas compartidas
         window.onload = function() {
-            var urlParams = new URLSearchParams(window.location.search);
-            var ox = urlParams.get('ox'), oy = urlParams.get('oy');
-            var dx = urlParams.get('dx'), dy = urlParams.get('dy');
-            var notaParam = urlParams.get('nota');
+            const urlParams = new URLSearchParams(window.location.search);
+            const ox = urlParams.get('ox'), oy = urlParams.get('oy');
+            const dx = urlParams.get('dx'), dy = urlParams.get('dy');
+            const notaParam = urlParams.get('nota');
 
             if (ox !== null && dx !== null) {
                 const container = document.getElementById('map-container');
@@ -288,10 +307,10 @@
                 container.appendChild(pinD);
 
                 document.querySelector(".control-panel").style.display = "none";
-                document.querySelector(".mode-selector-box").style.display = "none";
-                var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                document.getElementById("instruccion").innerHTML = "🧭 Ubicación actual marcada hacia <b>" + mensajeDestino + "</b>.";
-                document.querySelector("h2").innerHTML = "📍 Puntos de Referencia";
+                document.querySelector(".tabs-container").style.display = "none";
+                
+                const textoDestino = notaParam ? decodeURIComponent(notaParam) : "Destino indicado";
+                document.querySelector("h2").innerHTML = `🧭 Ruta hacia: <b>${textoDestino}</b>`;
             }
         };
     </script>

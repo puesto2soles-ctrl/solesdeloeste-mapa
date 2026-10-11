@@ -90,7 +90,6 @@
         button.reset-btn { background: #e74c3c; margin-left: 5px; }
         button.reset-btn:hover { background: #c0392b; }
 
-        /* Ocultar la caja de texto de instrucciones paso a paso que trae por defecto el plugin */
         .leaflet-routing-container {
             display: none !important;
         }
@@ -164,11 +163,22 @@
             [-33.111862, -64.401485]  // Noreste (Puesto Principal)
         ];
         
-        var imageUrl = 'https://puesto2soles-ctrl.github.io/solesdeloeste-map/sol1.png';
+        // Usamos la ruta local directa para que cargue junto al HTML en GitHub Pages
+        var imageUrl = 'sol1.png';
         L.imageOverlay(imageUrl, imageBounds, {
-            opacity: 0.85,
+            opacity: 0.9,
             interactive: true
         }).addTo(map);
+
+        // --- MARCADORES VISIBLES DE LOS PUESTOS ---
+        var markerPrincipal = L.marker([-33.111862, -64.401485]).addTo(map)
+            .bindPopup('<b>Puesto Principal</b>');
+
+        var markerPuesto1 = L.marker([-33.116553, -64.405181]).addTo(map)
+            .bindPopup('<b>Puesto 1</b>');
+
+        var markerPuesto2 = L.marker([-33.120714, -64.405171]).addTo(map)
+            .bindPopup('<b>Puesto 2</b>');
 
         var puestoActual = "Puesto Principal";
         var coordOrigen = [-33.111862, -64.401485];

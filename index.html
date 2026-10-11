@@ -94,6 +94,12 @@
             display: none !important;
         }
 
+        /* Mejora de nitidez para la capa de imagen */
+        .leaflet-image-layer {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
         #qr-container {
             margin-top: 15px;
             background: white;
@@ -157,10 +163,10 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // --- LÍMITES EXACTOS OBTENIDOS DESDE MAP WARPER (KML) ---
+        // --- LÍMITES EXACTOS DE MAP WARPER ---
         var imageBounds = [
-            [-33.1232533, -64.4058227], // Esquina Suroeste (South, West)
-            [-33.1126394, -64.399919]   // Esquina Noreste (North, East)
+            [-33.1232533, -64.4058227], // Esquina Suroeste
+            [-33.1126394, -64.399919]   // Esquina Noreste
         ];
         
         var imageUrl = 'sol1.png';

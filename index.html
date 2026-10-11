@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navegador Dinámico - Soles del Oeste</title>
-    
-    <!-- Estilos CSS de Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Marcador de Ubicación - Soles del Oeste</title>
     
     <!-- Librería para generar códigos QR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -34,18 +31,45 @@
             margin-bottom: 10px;
             font-size: 0.9rem;
             font-weight: bold;
-            max-width: 450px;
+            max-width: 500px;
         }
-        #map { 
-            width: 100%; 
-            max-width: 600px; 
-            height: 55vh; 
-            margin: 0 auto; 
+        
+        /* Contenedor de la imagen perfectamente nítido y sin distorsión */
+        #map-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
             border: 2px solid #bdc3c7;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            background: #ffffff;
+            background: #fff;
+            overflow: hidden;
+            cursor: crosshair;
         }
+        #map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            /* Máxima nitidez en navegadores modernos */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        /* Estilos de los pines colocados sobre la imagen */
+        .pin {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+        .pin-origen { background-color: #e74c3c; } /* Rojo */
+        .pin-destino { background-color: #3498db; } /* Azul */
+
         .control-panel { 
             margin-top: 15px;
             padding: 12px; 
@@ -53,7 +77,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: inline-block;
-            max-width: 450px;
+            max-width: 500px;
+            width: 90%;
         }
         button.action-btn {
             padding: 8px 16px;
@@ -93,11 +118,13 @@
     <h2>📍 Marcador de Ubicación - Soles del Oeste</h2>
     
     <div class="instruction-box" id="instruccion">
-        🔴 <b>Paso 1:</b> Haz clic en el plano para marcar <b>dónde se encuentran ahora mismo</b>.
+        🔴 <b>Paso 1:</b> Haz clic sobre el plano para marcar <b>dónde se encuentran ahora mismo</b>.
     </div>
 
-    <!-- Contenedor exclusivo para tu PNG -->
-    <div id="map"></div>
+    <!-- Contenedor con la imagen PNG directa -->
+    <div id="map-container" onclick="marcarPunto(event)">
+        <img id="map-image" src="sol1.png" alt="Plano Soles del Oeste">
+    </div>
 
     <div class="control-panel">
         <label for="comentario" style="font-size: 0.85rem;">Nota para el destino (Opcional):</label><br>
@@ -114,76 +141,73 @@
         <div id="qrcode"></div>
     </div>
 
-    <!-- Scripts de Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -1,
-            maxZoom: 3
-        });
+        let origenPorcentaje = null;
+        let destinoPorcentaje = null;
 
-        var h = 1000; 
-        var w = 1000; 
-        var imageBounds = [[0, 0], [h, w]];
+        function marcarPunto(event) {
+            const container = document.getElementById('map-container');
+            const rect = container.getBoundingClientRect();
+            
+            // Coordenadas exactas del clic relativas a la imagen en porcentaje (0 a 100)
+            const xPx = event.clientX - rect.left;
+            const yPx = event.clientY - rect.top;
+            
+            const xPorcentaje = (xPx / container.clientWidth) * 100;
+            const yPorcentaje = (yPx / container.clientHeight) * 100;
 
-        var imageUrl = 'sol1.png';
-        L.imageOverlay(imageUrl, imageBounds).addTo(map);
-
-        map.fitBounds(imageBounds);
-
-        var origenPunto = null;
-        var destinoPunto = null;
-        var markerOrigen = null;
-        var markerDestino = null;
-
-        map.on('click', function(e) {
-            if (!origenPunto) {
-                origenPunto = e.latlng;
+            if (!origenPorcentaje) {
+                origenPorcentaje = { x: xPorcentaje, y: yPorcentaje };
                 
-                var redIcon = L.divIcon({
-                    className: 'custom-red-marker',
-                    html: '<div style="background-color: #e74c3c; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.6);"></div>',
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
-                });
-
-                markerOrigen = L.marker([origenPunto.lat, origenPunto.lng], {icon: redIcon}).addTo(map)
-                    .bindPopup('<b>📍 Tu Ubicación Actual</b>').openPopup();
+                // Crear pin rojo de origen
+                const pin = document.createElement('div');
+                pin.className = 'pin pin-origen';
+                pin.style.left = xPorcentaje + '%';
+                pin.style.top = yPorcentaje + '%';
+                pin.id = 'pin-origen';
+                container.appendChild(pin);
 
                 document.getElementById("instruccion").innerHTML = "🎯 <b>Paso 2:</b> Ahora haz clic en el plano para marcar el <b>destino</b>.";
             
-            } else if (!destinoPunto) {
-                destinoPunto = e.latlng;
+            } else if (!destinoPorcentaje) {
+                destinoPorcentaje = { x: xPorcentaje, y: yPorcentaje };
 
-                markerDestino = L.marker([destinoPunto.lat, destinoPunto.lng]).addTo(map)
-                    .bindPopup('<b>Destino Seleccionado</b>').openPopup();
+                // Crear pin azul de destino
+                const pin = document.createElement('div');
+                pin.className = 'pin pin-destino';
+                pin.style.left = xPorcentaje + '%';
+                pin.style.top = yPorcentaje + '%';
+                pin.id = 'pin-destino';
+                container.appendChild(pin);
 
                 document.getElementById("instruccion").innerHTML = "✅ Puntos marcados. Presiona <b>Generar QR</b> o <b>Limpiar</b> para empezar de nuevo.";
             }
-        });
+        }
 
         function reiniciarRuta() {
-            if (markerOrigen) { map.removeLayer(markerOrigen); markerOrigen = null; }
-            if (markerDestino) { map.removeLayer(markerDestino); markerDestino = null; }
+            origenPorcentaje = null;
+            destinoPorcentaje = null;
             
-            origenPunto = null;
-            destinoPunto = null;
+            const pinOrigen = document.getElementById('pin-origen');
+            const pinDestino = document.getElementById('pin-destino');
+            if (pinOrigen) pinOrigen.remove();
+            if (pinDestino) pinDestino.remove();
+
             document.getElementById("qr-container").style.display = "none";
             document.getElementById("comentario").value = "";
-            document.getElementById("instruccion").innerHTML = "🔴 <b>Paso 1:</b> Haz clic en el plano para marcar <b>dónde se encuentran ahora mismo</b>.";
+            document.getElementById("instruccion").innerHTML = "🔴 <b>Paso 1:</b> Haz clic sobre el plano para marcar <b>dónde se encuentran ahora mismo</b>.";
         }
 
         function generarQR() {
-            if (!origenPunto || !destinoPunto) { 
+            if (!origenPorcentaje || !destinoPorcentaje) { 
                 alert("Debes marcar primero tu ubicación actual y luego el destino en el plano."); 
                 return; 
             }
             var nota = document.getElementById("comentario").value.trim();
             var baseUrl = window.location.origin + window.location.pathname;
 
-            var linkFinal = baseUrl + "?olat=" + origenPunto.lat.toFixed(2) + "&olng=" + origenPunto.lng.toFixed(2) + 
-                          "&dlat=" + destinoPunto.lat.toFixed(2) + "&dlng=" + destinoPunto.lng.toFixed(2);
+            var linkFinal = baseUrl + "?ox=" + origenPorcentaje.x.toFixed(1) + "&oy=" + origenPorcentaje.y.toFixed(1) + 
+                          "&dx=" + destinoPorcentaje.x.toFixed(1) + "&dy=" + destinoPorcentaje.y.toFixed(1);
             if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
 
             document.getElementById("resultado-texto").innerHTML = "Ubicación y destino" + (nota ? " (" + nota + ")" : "");
@@ -195,31 +219,30 @@
 
         window.onload = function() {
             var urlParams = new URLSearchParams(window.location.search);
-            var olat = urlParams.get('olat'), olng = urlParams.get('olng');
-            var dlat = urlParams.get('dlat'), dlng = urlParams.get('dlng');
+            var ox = urlParams.get('ox'), oy = urlParams.get('oy');
+            var dx = urlParams.get('dx'), dy = urlParams.get('dy');
             var notaParam = urlParams.get('nota');
 
-            if (olat !== null && dlat !== null) {
-                origenPunto = L.latLng(parseFloat(olat), parseFloat(olng));
-                destinoPunto = L.latLng(parseFloat(dlat), parseFloat(dlng));
+            if (ox !== null && dx !== null) {
+                const container = document.getElementById('map-container');
 
-                var redIcon = L.divIcon({
-                    className: 'custom-red-marker',
-                    html: '<div style="background-color: #e74c3c; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.6);"></div>',
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
-                });
+                // Mostrar pin de origen recibido por URL
+                const pinO = document.createElement('div');
+                pinO.className = 'pin pin-origen';
+                pinO.style.left = ox + '%';
+                pinO.style.top = oy + '%';
+                container.appendChild(pinO);
 
-                markerOrigen = L.marker([origenPunto.lat, origenPunto.lng], {icon: redIcon}).addTo(map)
-                    .bindPopup('<b>📍 Tu Ubicación</b>').openPopup();
-                markerDestino = L.marker([destinoPunto.lat, destinoPunto.lng]).addTo(map)
-                    .bindPopup('<b>Destino</b>').openPopup();
-
-                map.setView(origenPunto, 1);
+                // Mostrar pin de destino recibido por URL
+                const pinD = document.createElement('div');
+                pinD.className = 'pin pin-destino';
+                pinD.style.left = dx + '%';
+                pinD.style.top = dy + '%';
+                container.appendChild(pinD);
 
                 document.querySelector(".control-panel").style.display = "none";
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                document.getElementById("instruccion").innerHTML = "🧭 Ubicación actual marcada hacia <b>" + mensajeDestino + "</b>.";
+                document.getElementById("instruccion").innerHTML = "🧭 Tu ubicación actual marcada hacia <b>" + mensajeDestino + "</b>.";
                 document.querySelector("h2").innerHTML = "📍 Puntos de Referencia";
             }
         };

@@ -69,8 +69,7 @@
             width: 100%;
             height: auto;
             display: block;
-            /* Aplicamos la rotación de 180 grados sin alterar el contenedor de clics */
-            transform: rotate(180deg);
+            /* Sin rotaciones CSS para mantener el mapeo de coordenadas 100% exacto con el toque */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
@@ -215,10 +214,11 @@
 
             if (xPx < 0 || yPx < 0 || xPx > rect.width || yPx > rect.height) return;
 
-            // Como la imagen está rotada 180°, invertimos las coordenadas visuales 
-            // para que los pines coincidan exactamente con el lugar donde se hace clic.
-            const xPorcentaje = ((rect.width - xPx) / rect.width) * 100;
-            const yPorcentaje = ((rect.height - yPx) / rect.height) * 100;
+            // Como quitamos la rotación de CSS para garantizar precisión milimétrica en los clics,
+            // si la imagen original que subiste necesita estar derecha, el archivo se debe enderezar 
+            // una sola vez desde la PC (con cualquier editor de fotos) a 0 grados.
+            const xPorcentaje = (xPx / rect.width) * 100;
+            const yPorcentaje = (yPx / rect.height) * 100;
 
             if (modoActual === 'origen') {
                 puntoOrigen = { x: xPorcentaje, y: yPorcentaje };

@@ -54,11 +54,10 @@
             max-width: 500px;
         }
         
-        /* Contenedor limpio sin barras de desplazamiento */
         #map-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: 550px;
             margin: 0 auto;
             border: 2px solid #bdc3c7;
             border-radius: 8px;
@@ -68,16 +67,18 @@
             cursor: crosshair;
         }
 
-        /* Imagen adaptada proporcionalmente conservando su nitidez natural */
+        /* Imagen nítida adaptada al ancho */
         #map-image {
             width: 100%;
             height: auto;
             display: block;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
+            /* Si necesitas rotarla para enderezarla, descomenta la siguiente línea cambiando los grados (ej: 90deg, -90deg, 180deg) */
+            /* transform: rotate(0deg); */
         }
 
-        /* Pines de 6 píxeles */
+        /* Pines exactos de 6 píxeles */
         .pin {
             position: absolute;
             width: 6px;
@@ -187,7 +188,6 @@
             const img = document.getElementById('map-image');
             const rect = img.getBoundingClientRect();
             
-            // Cálculo exacto de la posición del clic sobre la imagen visible
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
             
@@ -271,7 +271,7 @@
                 const container = document.getElementById('map-container');
 
                 const pinO = document.createElement('div');
-                pinO.className = 'pin pin-origen';
+                pinO.className, 'pin pin-origen';
                 pinO.style.left = ox + '%';
                 pinO.style.top = oy + '%';
                 container.appendChild(pinO);

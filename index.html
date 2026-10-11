@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navegador Directo - Soles del Oeste</title>
+    <title>Navegador Dinámico - Soles del Oeste</title>
     
     <!-- Estilos CSS de Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -44,7 +44,7 @@
             border: 2px solid #bdc3c7;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            background: #fff;
+            background: #ffffff;
         }
         .control-panel { 
             margin-top: 15px;
@@ -54,24 +54,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: inline-block;
             max-width: 450px;
-        }
-        .puestos-selector {
-            margin-bottom: 10px;
-        }
-        .puestos-selector button {
-            padding: 6px 10px;
-            margin: 2px;
-            font-size: 0.8rem;
-            border: 1px solid #bdc3c7;
-            background: #ecf0f1;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .puestos-selector button.activo {
-            background: #3498db;
-            color: white;
-            border-color: #2980b9;
         }
         button.action-btn {
             padding: 8px 16px;
@@ -108,24 +90,16 @@
 </head>
 <body>
 
-    <h2>📍 Navegador Directo en Plano - Soles del Oeste</h2>
+    <h2>📍 Marcador de Ubicación - Soles del Oeste</h2>
     
     <div class="instruction-box" id="instruccion">
-        🎯 Selecciona el puesto de origen y haz clic sobre tu plano para marcar el destino.
+        🔴 <b>Paso 1:</b> Haz clic en el plano para marcar <b>dónde se encuentran ahora mismo</b>.
     </div>
 
-    <!-- Contenedor del Mapa basado exclusivamente en la imagen -->
+    <!-- Contenedor exclusivo para tu PNG -->
     <div id="map"></div>
 
     <div class="control-panel">
-        <div class="puestos-selector">
-            <span style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 4px;">Puesto de Origen:</span>
-            <!-- Coordenadas internas personalizadas para tu imagen limpia -->
-            <button type="button" id="btn-principal" class="activo" onclick="cambiarPuesto('Puesto Principal', 800, 500)">Principal</button>
-            <button type="button" id="btn-p1" onclick="cambiarPuesto('Puesto 1', 500, 200)">Puesto 1</button>
-            <button type="button" id="btn-p2" onclick="cambiarPuesto('Puesto 2', 200, 800)">Puesto 2</button>
-        </div>
-
         <label for="comentario" style="font-size: 0.85rem;">Nota para el destino (Opcional):</label><br>
         <input type="text" id="comentario" placeholder="Ej: Manzana / Lote / Propietario..." style="width: 85%; padding: 6px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
         <br>
@@ -135,108 +109,84 @@
 
     <!-- Contenedor del QR -->
     <div id="qr-container">
-        <div id="resultado-texto" style="font-weight: bold; font-size: 0.9rem; color: #2c3e50;">Ruta generada</div>
-        <p style="font-size: 0.8rem; color: #555; margin: 5px 0;">Escanea con el celular:</p>
+        <div id="resultado-texto" style="font-weight: bold; font-size: 0.9rem; color: #2c3e50;">Puntos marcados</div>
+        <p style="font-size: 0.80rem; color: #555; margin: 5px 0;">Escanea con el celular:</p>
         <div id="qrcode"></div>
     </div>
 
     <!-- Scripts de Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Usamos un sistema de coordenadas CRS.Simple para trabajar directamente con los píxeles de tu imagen PNG
         var map = L.map('map', {
             crs: L.CRS.Simple,
-            minZoom: -2,
-            maxZoom: 3,
-            maxBoundsViscosity: 1.0
+            minZoom: -1,
+            maxZoom: 3
         });
 
-        // Dimensiones estimadas de tu imagen en píxeles (puedes ajustarlas según el tamaño real de tu PNG)
-        var h = 1000; // Alto de la imagen
-        var w = 1000; // Ancho de la imagen
+        var h = 1000; 
+        var w = 1000; 
         var imageBounds = [[0, 0], [h, w]];
 
-        // Cargamos tu PNG directamente como mapa base limpio
         var imageUrl = 'sol1.png';
-        var imageLayer = L.imageOverlay(imageUrl, imageBounds).addTo(map);
+        L.imageOverlay(imageUrl, imageBounds).addTo(map);
 
         map.fitBounds(imageBounds);
 
-        // Puestos iniciales ubicados sobre el plano por defecto (en píxeles)
-        var coordOrigen = [800, 500]; // Puesto Principal por defecto
-        var puestoActual = "Puesto Principal";
+        var origenPunto = null;
         var destinoPunto = null;
-        var polyline = null;
-
-        // Marcadores visuales de los puestos
-        var markerPrincipal = L.marker([800, 500]).addTo(map).bindPopup('<b>Puesto Principal</b>');
-        var markerPuesto1 = L.marker([500, 200]).addTo(map).bindPopup('<b>Puesto 1</b>');
-        var markerPuesto2 = L.marker([200, 800]).addTo(map).bindPopup('<b>Puesto 2</b>');
+        var markerOrigen = null;
         var markerDestino = null;
 
-        function cambiarPuesto(nombre, y, x) {
-            puestoActual = nombre;
-            coordOrigen = [y, x];
-
-            document.getElementById("btn-principal").className = (nombre === "Puesto Principal") ? "activo" : "";
-            document.getElementById("btn-p1").className = (nombre === "Puesto 1") ? "activo" : "";
-            document.getElementById("btn-p2").className = (nombre === "Puesto 2") ? "activo" : "";
-
-            map.setView(coordOrigen, 0);
-
-            if (destinoPunto) {
-                trazarLinea(destinoPunto);
-            }
-        }
-
-        // Clic en cualquier parte de tu plano para marcar el destino y trazar la línea directa
         map.on('click', function(e) {
-            destinoPunto = e.latlng;
-            trazarLinea(destinoPunto);
-            document.getElementById("qr-container").style.display = "none";
+            if (!origenPunto) {
+                origenPunto = e.latlng;
+                
+                var redIcon = L.divIcon({
+                    className: 'custom-red-marker',
+                    html: '<div style="background-color: #e74c3c; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.6);"></div>',
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+
+                markerOrigen = L.marker([origenPunto.lat, origenPunto.lng], {icon: redIcon}).addTo(map)
+                    .bindPopup('<b>📍 Tu Ubicación Actual</b>').openPopup();
+
+                document.getElementById("instruccion").innerHTML = "🎯 <b>Paso 2:</b> Ahora haz clic en el plano para marcar el <b>destino</b>.";
+            
+            } else if (!destinoPunto) {
+                destinoPunto = e.latlng;
+
+                markerDestino = L.marker([destinoPunto.lat, destinoPunto.lng]).addTo(map)
+                    .bindPopup('<b>Destino Seleccionado</b>').openPopup();
+
+                document.getElementById("instruccion").innerHTML = "✅ Puntos marcados. Presiona <b>Generar QR</b> o <b>Limpiar</b> para empezar de nuevo.";
+            }
         });
 
-        function trazarLinea(dest) {
-            if (polyline) {
-                map.removeLayer(polyline);
-            }
-            if (markerDestino) {
-                map.removeLayer(markerDestino);
-            }
-
-            // Marcador en el destino seleccionado
-            markerDestino = L.marker([dest.lat, dest.lng]).addTo(map).bindPopup('<b>Destino seleccionado</b>');
-
-            // Trazar línea recta o de guía directa sobre el plano
-            polyline = L.polyline([
-                [coordOrigen[0], coordOrigen[1]],
-                [dest.lat, dest.lng]
-            ], {
-                color: '#e74c3c',
-                weight: 4,
-                opacity: 0.8
-            }).addTo(map);
-        }
-
         function reiniciarRuta() {
-            if (polyline) { map.removeLayer(polyline); polyline = null; }
+            if (markerOrigen) { map.removeLayer(markerOrigen); markerOrigen = null; }
             if (markerDestino) { map.removeLayer(markerDestino); markerDestino = null; }
+            
+            origenPunto = null;
             destinoPunto = null;
             document.getElementById("qr-container").style.display = "none";
             document.getElementById("comentario").value = "";
+            document.getElementById("instruccion").innerHTML = "🔴 <b>Paso 1:</b> Haz clic en el plano para marcar <b>dónde se encuentran ahora mismo</b>.";
         }
 
         function generarQR() {
-            if (!destinoPunto) { alert("Haz clic sobre el plano para marcar un destino."); return; }
+            if (!origenPunto || !destinoPunto) { 
+                alert("Debes marcar primero tu ubicación actual y luego el destino en el plano."); 
+                return; 
+            }
             var nota = document.getElementById("comentario").value.trim();
             var baseUrl = window.location.origin + window.location.pathname;
 
-            var linkFinal = baseUrl + "?lat=" + destinoPunto.lat.toFixed(2) + "&lng=" + destinoPunto.lng.toFixed(2) + 
-                          "&puesto=" + encodeURIComponent(puestoActual) + 
-                          "&olat=" + coordOrigen[0] + "&olng=" + coordOrigen[1];
+            var linkFinal = baseUrl + "?olat=" + origenPunto.lat.toFixed(2) + "&olng=" + origenPunto.lng.toFixed(2) + 
+                          "&dlat=" + destinoPunto.lat.toFixed(2) + "&dlng=" + destinoPunto.lng.toFixed(2);
             if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
 
-            document.getElementById("resultado-texto").innerHTML = "Ruta desde " + puestoActual + (nota ? " (" + nota + ")" : "");
+            document.getElementById("resultado-texto").innerHTML = "Ubicación y destino" + (nota ? " (" + nota + ")" : "");
             var qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = "";
             new QRCode(qrcodeDiv, { text: linkFinal, width: 140, height: 140 });
@@ -245,21 +195,32 @@
 
         window.onload = function() {
             var urlParams = new URLSearchParams(window.location.search);
-            var lat = urlParams.get('lat'), lng = urlParams.get('lng'), puestoParam = urlParams.get('puesto');
-            var olat = urlParams.get('olat'), olng = urlParams.get('olng'), notaParam = urlParams.get('nota');
+            var olat = urlParams.get('olat'), olng = urlParams.get('olng');
+            var dlat = urlParams.get('dlat'), dlng = urlParams.get('dlng');
+            var notaParam = urlParams.get('nota');
 
-            if (lat !== null && lng !== null) {
-                if (olat !== null && olng !== null) coordOrigen = [parseFloat(olat), parseFloat(olng)];
-                if (puestoParam) puestoActual = decodeURIComponent(puestoParam);
+            if (olat !== null && dlat !== null) {
+                origenPunto = L.latLng(parseFloat(olat), parseFloat(olng));
+                destinoPunto = L.latLng(parseFloat(dlat), parseFloat(dlng));
 
-                destinoPunto = L.latLng(parseFloat(lat), parseFloat(lng));
-                trazarLinea(destinoPunto);
-                map.setView(coordOrigen, 0);
+                var redIcon = L.divIcon({
+                    className: 'custom-red-marker',
+                    html: '<div style="background-color: #e74c3c; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.6);"></div>',
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+
+                markerOrigen = L.marker([origenPunto.lat, origenPunto.lng], {icon: redIcon}).addTo(map)
+                    .bindPopup('<b>📍 Tu Ubicación</b>').openPopup();
+                markerDestino = L.marker([destinoPunto.lat, destinoPunto.lng]).addTo(map)
+                    .bindPopup('<b>Destino</b>').openPopup();
+
+                map.setView(origenPunto, 1);
 
                 document.querySelector(".control-panel").style.display = "none";
                 var mensajeDestino = notaParam ? decodeURIComponent(notaParam) : "Destino asignado";
-                document.getElementById("instruccion").innerHTML = "🧭 Sigue la línea marcada desde el <b>" + puestoActual + "</b> hacia <b>" + mensajeDestino + "</b>.";
-                document.querySelector("h2").innerHTML = "📍 Indicaciones de Guía";
+                document.getElementById("instruccion").innerHTML = "🧭 Ubicación actual marcada hacia <b>" + mensajeDestino + "</b>.";
+                document.querySelector("h2").innerHTML = "📍 Puntos de Referencia";
             }
         };
     </script>

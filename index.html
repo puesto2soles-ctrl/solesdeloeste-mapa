@@ -54,24 +54,25 @@
             max-width: 500px;
         }
         
-        /* Contenedor con scroll para explorar la imagen a su máxima resolución nativa */
+        /* Contenedor limpio sin barras de desplazamiento */
         #map-container {
             position: relative;
             width: 100%;
-            max-width: 650px;
-            height: 60vh;
+            max-width: 600px;
             margin: 0 auto;
             border: 2px solid #bdc3c7;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             background: #fff;
-            overflow: auto; 
+            overflow: hidden; 
             cursor: crosshair;
         }
 
+        /* Imagen adaptada proporcionalmente conservando su nitidez natural */
         #map-image {
+            width: 100%;
+            height: auto;
             display: block;
-            /* Se ajustará dinámicamente al tamaño real leído por JS para cero pérdida de calidad */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
@@ -151,8 +152,7 @@
     </div>
 
     <div id="map-container" onclick="marcarPunto(event)">
-        <!-- Se le asigna un evento onload para leer automáticamente sus dimensiones nativas -->
-        <img id="map-image" src="sol1.png" alt="Plano Soles del Oeste" onload="ajustarResolucionReal(this)">
+        <img id="map-image" src="sol1.png" alt="Plano Soles del Oeste">
     </div>
 
     <div class="control-panel">
@@ -173,16 +173,6 @@
         let origenPorcentaje = null;
         let destinoPorcentaje = null;
 
-        // Función que lee los píxeles reales de la imagen y fija su tamaño exacto
-        function ajustarResolucionReal(img) {
-            const anchoReal = img.naturalWidth;
-            const altoReal = img.naturalHeight;
-            
-            // Fijamos el ancho y alto exacto en píxeles que tiene el archivo nativo
-            img.style.width = anchoReal + 'px';
-            img.style.height = altoReal + 'px';
-        }
-
         function cambiarModo() {
             const modo = document.getElementById('modoSeleccion').value;
             const instruccion = document.getElementById('instruccion');
@@ -197,6 +187,7 @@
             const img = document.getElementById('map-image');
             const rect = img.getBoundingClientRect();
             
+            // Cálculo exacto de la posición del clic sobre la imagen visible
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
             

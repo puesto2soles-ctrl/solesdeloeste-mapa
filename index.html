@@ -54,28 +54,28 @@
             max-width: 500px;
         }
         
+        /* Contenedor con barra de desplazamiento para mantener la imagen en alta calidad sin comprimirla */
         #map-container {
             position: relative;
             width: 100%;
-            max-width: 700px; /* Ampliado ligeramente para mejor lectura */
+            max-width: 650px;
+            height: 60vh;
             margin: 0 auto;
             border: 2px solid #bdc3c7;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             background: #fff;
-            overflow: hidden;
+            overflow: auto; /* Permite hacer scroll y ver cada detalle nítido */
             cursor: crosshair;
         }
 
-        /* Forzar renderizado ultra nítido por hardware */
+        /* Imagen a un tamaño amplio fijo para que las letras no se deformen ni blurreen */
         #map-image {
-            width: 100%;
+            width: 1400px; /* Forzamos un ancho real grande para mantener la nitidez nativa */
             height: auto;
             display: block;
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
-            -webkit-font-smoothing: antialiased;
         }
 
         /* Pines de 6 píxeles */
@@ -185,16 +185,20 @@
         }
 
         function marcarPunto(event) {
-            const container = document.getElementById('map-container');
-            const rect = container.getBoundingClientRect();
+            const img = document.getElementById('map-image');
+            const rect = img.getBoundingClientRect();
             
+            // Coordenadas relativas exactas sobre la imagen real
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
             
-            const xPorcentaje = (xPx / container.clientWidth) * 100;
-            const yPorcentaje = (yPx / container.clientHeight) * 100;
+            if (xPx < 0 || yPx < 0 || xPx > rect.width || yPx > rect.height) return;
+
+            const xPorcentaje = (xPx / rect.width) * 100;
+            const yPorcentaje = (yPx / rect.height) * 100;
 
             const modo = document.getElementById('modoSeleccion').value;
+            const container = document.getElementById('map-container');
 
             if (modo === 'origen') {
                 origenPorcentaje = { x: xPorcentaje, y: yPorcentaje };
@@ -247,8 +251,8 @@
             var nota = document.getElementById("comentario").value.trim();
             var baseUrl = window.location.origin + window.location.pathname;
 
-            var linkFinal = baseUrl + "?ox=" + origenPorcentaje.x.toFixed(1) + "&oy=" + origenPorcentaje.y.toFixed(1) + 
-                          "&dx=" + destinoPorcentaje.x.toFixed(1) + "&dy=" + destinoPorcentaje.y.toFixed(1);
+            var linkFinal = baseUrl + "?ox=" + origenPorcentaje.x.toFixed(2) + "&oy=" + origenPorcentaje.y.toFixed(2) + 
+                          "&dx=" + destinoPorcentaje.x.toFixed(2) + "&dy=" + destinoPorcentaje.y.toFixed(2);
             if (nota !== "") linkFinal += "&nota=" + encodeURIComponent(nota);
 
             document.getElementById("resultado-texto").innerHTML = "Ubicación y destino" + (nota ? " (" + nota + ")" : "");

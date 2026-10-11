@@ -157,13 +157,12 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // --- SUPERPOSICIÓN DE TU PLANO LOCAL (sol1.png) ---
+        // --- LÍMITES CALIBRADOS PARA EL PLANO ---
         var imageBounds = [
-            [-33.120714, -64.405171], // Suroeste (Puesto 2)
-            [-33.111862, -64.401485]  // Noreste (Puesto Principal)
+            [-33.123500, -64.407500], // Esquina Suroeste
+            [-33.110000, -64.398000]  // Esquina Noreste
         ];
         
-        // Usamos la ruta local directa para que cargue junto al HTML en GitHub Pages
         var imageUrl = 'sol1.png';
         L.imageOverlay(imageUrl, imageBounds, {
             opacity: 0.9,

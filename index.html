@@ -57,7 +57,7 @@
         #map-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: 700px; /* Ampliado ligeramente para mejor lectura */
             margin: 0 auto;
             border: 2px solid #bdc3c7;
             border-radius: 8px;
@@ -67,15 +67,15 @@
             cursor: crosshair;
         }
 
-        /* Máxima nitidez y anti-alisado para la imagen PNG */
+        /* Forzar renderizado ultra nítido por hardware */
         #map-image {
             width: 100%;
             height: auto;
             display: block;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
             image-rendering: pixelated;
-            -ms-interpolation-mode: nearest-neighbor;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Pines de 6 píxeles */
@@ -86,7 +86,7 @@
             border-radius: 50%;
             border: 2px solid white;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 4px rgba(0,0,0,0.8);
+            box-shadow: 0 0 4px rgba(0,0,0,0.9);
             pointer-events: none;
             z-index: 10;
         }

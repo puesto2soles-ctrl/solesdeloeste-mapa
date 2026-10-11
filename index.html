@@ -61,7 +61,7 @@
             border: 3px solid #cbd5e1;
             border-radius: 12px;
             overflow: hidden;
-            background: #000;
+            background: #fff;
             cursor: crosshair;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
@@ -69,19 +69,20 @@
             width: 100%;
             height: auto;
             display: block;
-            /* Renderizado nítido puro nativo sin rotaciones */
+            /* Corregimos la orientación 180 grados exacta y máxima nitidez nativa */
+            transform: rotate(180deg);
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
         /* Pines tácticos */
         .pin {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             border: 2px solid #ffffff;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 6px rgba(0,0,0,0.8);
+            box-shadow: 0 0 4px rgba(0,0,0,0.9);
             pointer-events: none;
             z-index: 10;
         }
@@ -165,7 +166,7 @@
         <button id="btnTabDestino" class="tab-btn" onclick="cambiarModo('destino')">🔵 2. Destino</button>
     </div>
 
-    <!-- Contenedor del mapa limpio -->
+    <!-- Contenedor del mapa -->
     <div id="map-container" onclick="marcarPunto(event)">
         <img id="map-image" src="1000043402_2.jpg" alt="Plano Soles del Oeste">
     </div>
@@ -187,7 +188,7 @@
     </div>
 
     <script>
-        let modoActual = 'origen'; // 'origen' o 'destino'
+        let modoActual = 'origen';
         let puntoOrigen = null;
         let puntoDestino = null;
 
@@ -214,8 +215,10 @@
 
             if (xPx < 0 || yPx < 0 || xPx > rect.width || yPx > rect.height) return;
 
-            const xPorcentaje = (xPx / rect.width) * 100;
-            const yPorcentaje = (yPx / rect.height) * 100;
+            // Como la imagen está rotada 180 grados, invertimos las proporciones del clic para que coincidan exactamente
+            const xPorcentaje = ((rect.width - xPx) / rect.width) * 100;
+            const yPorcentaje = ((rect.height - yPx) / rect.height) * 100;
+            
             const container = document.getElementById('map-container');
 
             if (modoActual === 'origen') {
@@ -231,7 +234,6 @@
                 pin.id = 'pin-origen';
                 container.appendChild(pin);
 
-                // Cambiar automáticamente a destino para agilizar el uso en guardia
                 cambiarModo('destino');
 
             } else {
@@ -284,7 +286,6 @@
             document.getElementById("qr-container").style.display = "block";
         }
 
-        // Carga automática si se abre un link con coordenadas compartidas
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const ox = urlParams.get('ox'), oy = urlParams.get('oy');

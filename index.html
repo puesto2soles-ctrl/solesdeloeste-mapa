@@ -54,7 +54,7 @@
             max-width: 500px;
         }
         
-        /* Contenedor con barra de desplazamiento para mantener la imagen en alta calidad sin comprimirla */
+        /* Contenedor con scroll para explorar la imagen a su máxima resolución nativa */
         #map-container {
             position: relative;
             width: 100%;
@@ -65,15 +65,13 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             background: #fff;
-            overflow: auto; /* Permite hacer scroll y ver cada detalle nítido */
+            overflow: auto; 
             cursor: crosshair;
         }
 
-        /* Imagen a un tamaño amplio fijo para que las letras no se deformen ni blurreen */
         #map-image {
-            width: 1400px; /* Forzamos un ancho real grande para mantener la nitidez nativa */
-            height: auto;
             display: block;
+            /* Se ajustará dinámicamente al tamaño real leído por JS para cero pérdida de calidad */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
@@ -153,7 +151,8 @@
     </div>
 
     <div id="map-container" onclick="marcarPunto(event)">
-        <img id="map-image" src="sol1.png" alt="Plano Soles del Oeste">
+        <!-- Se le asigna un evento onload para leer automáticamente sus dimensiones nativas -->
+        <img id="map-image" src="sol1.png" alt="Plano Soles del Oeste" onload="ajustarResolucionReal(this)">
     </div>
 
     <div class="control-panel">
@@ -174,6 +173,16 @@
         let origenPorcentaje = null;
         let destinoPorcentaje = null;
 
+        // Función que lee los píxeles reales de la imagen y fija su tamaño exacto
+        function ajustarResolucionReal(img) {
+            const anchoReal = img.naturalWidth;
+            const altoReal = img.naturalHeight;
+            
+            // Fijamos el ancho y alto exacto en píxeles que tiene el archivo nativo
+            img.style.width = anchoReal + 'px';
+            img.style.height = altoReal + 'px';
+        }
+
         function cambiarModo() {
             const modo = document.getElementById('modoSeleccion').value;
             const instruccion = document.getElementById('instruccion');
@@ -188,7 +197,6 @@
             const img = document.getElementById('map-image');
             const rect = img.getBoundingClientRect();
             
-            // Coordenadas relativas exactas sobre la imagen real
             const xPx = event.clientX - rect.left;
             const yPx = event.clientY - rect.top;
             
